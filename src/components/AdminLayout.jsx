@@ -48,7 +48,7 @@ export default function AdminLayout() {
                 {/* Collapse Toggle */}
                 <button
                     onClick={() => setCollapsed(!collapsed)}
-                    className="absolute -right-3 top-9 bg-white border border-slate-200 rounded-full p-1.5 text-slate-400 hover:text-primary hover:border-primary transition-all shadow-sm z-50 focus:outline-none"
+                    className={`absolute -right-3 ${collapsed ? 'top-20' : 'top-24'} -translate-y-1/2 bg-white border border-slate-200 rounded-full p-1.5 text-slate-400 hover:text-primary hover:border-primary transition-all duration-300 shadow-sm z-50 focus:outline-none`}
                 >
                     {collapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
                 </button>

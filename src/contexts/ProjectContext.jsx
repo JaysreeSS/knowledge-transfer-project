@@ -53,10 +53,10 @@ export const ProjectProvider = ({ children }) => {
 
         if (error) {
             console.error("Supabase fetch error:", error);
-            // Fallback to localStorage ONLY if data is empty or we had an actual error
-            const stored = localStorage.getItem("kt_projects");
+            // Fallback to sessionStorage ONLY if data is empty or we had an actual error
+            const stored = sessionStorage.getItem("kt_projects");
             if (stored && projects.length === 0) {
-                console.log("[ProjectContext] Loading from localStorage fallback due to error.");
+                console.log("[ProjectContext] Loading from sessionStorage fallback due to error.");
                 setProjects(JSON.parse(stored));
             }
         } else {
@@ -106,7 +106,7 @@ export const ProjectProvider = ({ children }) => {
                     }))
             }));
             setProjects(formattedProjects);
-            localStorage.setItem("kt_projects", JSON.stringify(formattedProjects));
+            sessionStorage.setItem("kt_projects", JSON.stringify(formattedProjects));
         }
         setLoading(false);
         setInitialized(true);
@@ -120,7 +120,7 @@ export const ProjectProvider = ({ children }) => {
         } else if (initialized) {
             // If user logged out, clear projects
             setProjects([]);
-            localStorage.removeItem("kt_projects");
+            sessionStorage.removeItem("kt_projects");
         }
     }, [user?.id]); // Depend on user ID specifically
 
