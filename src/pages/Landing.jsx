@@ -21,9 +21,9 @@ export default function Landing() {
     // Unified navigation logic based on user role
     useEffect(() => {
         if (user) {
-            if (user.role === 'admin' || user.isAdmin) {
+            if (user.role === 'System Admin' || user.isAdmin) {
                 navigate('/admin');
-            } else if (user.role === 'manager') {
+            } else if (user.role === 'Manager') {
                 navigate('/manager');
             } else {
                 // Default to ICR Dashboard for other roles
@@ -127,7 +127,7 @@ export default function Landing() {
                             <Button
                                 type="submit"
                                 disabled={isLoading}
-                                className="w-full h-11 bg-primary hover:bg-primary/90 text-white rounded-lg font-bold shadow-md hover:shadow-lg transition-all"
+                                className="w-full h-11 bg-primary hover:bg-primary/90 text-white rounded-lg font-bold uppercase tracking-widest text-[10px] shadow-md hover:shadow-lg transition-all"
                             >
                                 {isLoading ? (
                                     <Loader2 className="w-4 h-4 animate-spin" />

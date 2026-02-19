@@ -1,5 +1,6 @@
 import React from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate, Outlet } from "react-router-dom";
+import { Toaster } from "sonner";
 import { AuthProvider, useAuth } from "./contexts/AuthContext.jsx";
 import { AdminProvider } from "./contexts/AdminContext.jsx";
 import { ProjectProvider } from "./contexts/ProjectContext.jsx";
@@ -34,7 +35,7 @@ function ProtectedRoute({ allowedRoles }) {
     if (!isAuthenticated) return <Navigate to="/" replace />;
 
     if (allowedRoles && user) {
-        const hasRole = allowedRoles.includes(user.role) || (user.isAdmin && allowedRoles.includes('admin'));
+        const hasRole = allowedRoles.includes(user.role) || (user.isAdmin && allowedRoles.includes('System Admin'));
         if (!hasRole) {
             return <Navigate to="/dashboard" replace />;
         }
@@ -48,13 +49,14 @@ export default function App() {
             <AdminProvider>
                 <ProjectProvider>
                     <Router>
+                        <Toaster position="top-right" richColors closeButton duration={4000} />
                         <Routes>
                             {/* Unified Landing / Login Page */}
                             <Route path="/" element={<Landing />} />
 
                             {/* Admin Layout & Routes */}
                             <Route element={<AdminLayout />}>
-                                <Route element={<ProtectedRoute allowedRoles={['admin']} />}>
+                                <Route element={<ProtectedRoute allowedRoles={['System Admin']} />}>
                                     <Route path="/admin" element={<AdminDashboard />} />
                                     <Route path="/admin/users" element={<UserManagement />} />
                                     <Route path="/admin/templates" element={<TemplateManagement />} />
@@ -65,7 +67,7 @@ export default function App() {
 
                             {/* Manager Layout & Routes */}
                             <Route element={<ManagerLayout />}>
-                                <Route element={<ProtectedRoute allowedRoles={['manager']} />}>
+                                <Route element={<ProtectedRoute allowedRoles={['Manager']} />}>
                                     <Route path="/manager" element={<ManagerDashboard />} />
                                     <Route path="/manager/create-project" element={<CreateProject />} />
                                     <Route path="/manager/projects" element={<AllProjects />} />

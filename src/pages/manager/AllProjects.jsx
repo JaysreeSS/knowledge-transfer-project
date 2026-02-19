@@ -36,51 +36,51 @@ export default function AllProjects() {
 
     return (
         <div className="min-h-screen bg-slate-50 font-sans">
-            <main className="px-8 md:px-12 py-6 max-w-7xl mx-auto space-y-5 animate-in fade-in duration-700">
+            <main className="px-4 sm:px-8 md:px-12 py-6 max-w-7xl mx-auto space-y-5 animate-in fade-in duration-700">
                 <header className="flex flex-col md:flex-row md:items-center justify-between gap-10">
                     <div className="space-y-1">
-                        <h1 className="text-2xl font-black text-slate-800 tracking-tight uppercase">
+                        <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
                             All Projects
                         </h1>
-                        <p className="text-slate-500 font-bold text-sm leading-relaxed max-w-lg">
+                        <p className="text-slate-500 text-sm font-medium leading-relaxed max-w-lg">
                             Manage and track every project handover.
                         </p>
                     </div>
-                    <div className="flex items-center gap-4">
-                        <div className="relative w-64 group">
+                    <div className="flex items-center gap-3">
+                        <div className="relative w-72 group">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-primary transition-colors" />
                             <Input
                                 placeholder="Search projects..."
-                                className="pl-10 h-11 bg-white border-slate-200 rounded-xl shadow-sm focus:ring-primary focus:border-primary font-bold text-sm"
+                                className="pl-10 h-10 bg-white border-slate-200 rounded-lg shadow-sm focus:ring-primary/20 focus:border-primary text-sm font-medium"
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                             />
                         </div>
-                        <Button onClick={() => navigate('/manager/create-project')} className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/20 rounded-xl h-11 px-6 font-bold uppercase tracking-widest text-sm transition-all hover:scale-105 active:scale-95">
-                            <Plus className="w-4 h-4 mr-2" /> New Project
+                        <Button onClick={() => navigate('/manager/create-project')} className="bg-primary hover:bg-primary/90 text-white rounded-lg h-10 px-6 font-bold uppercase tracking-widest text-[10px] shadow-sm">
+                            <Plus className="w-3.5 h-3.5 mr-2" /> New Project
                         </Button>
                     </div>
                 </header>
 
                 <div className="grid grid-cols-1 gap-6">
                     {filteredProjects.length === 0 ? (
-                        <Card className="border-dashed py-20 bg-slate-50/50">
-                            <CardContent className="flex flex-col items-center justify-center opacity-40">
-                                <ShieldAlert className="w-12 h-12 mb-4 text-slate-400" />
-                                <p className="font-bold text-slate-500 uppercase tracking-widest text-xs">No project records found</p>
+                        <Card className="border border-dashed border-slate-200 py-24 bg-slate-50/50 rounded-xl">
+                            <CardContent className="flex flex-col items-center justify-center">
+                                <ShieldAlert className="w-12 h-12 mb-4 text-slate-200" />
+                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">No project records found</p>
                             </CardContent>
                         </Card>
                     ) : (
                         <div className="space-y-6">
-                            <div className="bg-white/80 backdrop-blur border-none shadow-md shadow-slate-200/50 rounded-[2rem] overflow-hidden">
+                            <div className="bg-white border border-slate-200 shadow-sm rounded-xl overflow-hidden">
                                 <table className="w-full text-left border-collapse">
-                                    <thead className="bg-slate-50/50 border-b border-slate-100">
-                                        <tr>
-                                            <th className="p-4 text-xs font-bold uppercase tracking-wider text-slate-500">Project Name</th>
-                                            <th className="p-4 text-xs font-bold uppercase tracking-wider text-slate-500">Status</th>
-                                            <th className="p-4 text-xs font-bold uppercase tracking-wider text-slate-500">Deadline</th>
-                                            <th className="p-4 text-xs font-bold uppercase tracking-wider text-slate-500">Completion</th>
-                                            <th className="p-4 text-xs font-bold uppercase tracking-wider text-slate-500 text-right"></th>
+                                    <thead>
+                                        <tr className="bg-slate-50/50 border-b border-slate-100">
+                                            <th className="p-4 text-[10px] font-bold uppercase tracking-widest text-slate-400">Project Name</th>
+                                            <th className="p-4 text-[10px] font-bold uppercase tracking-widest text-slate-400">Status</th>
+                                            <th className="p-4 text-[10px] font-bold uppercase tracking-widest text-slate-400">Deadline</th>
+                                            <th className="p-4 text-[10px] font-bold uppercase tracking-widest text-slate-400">Completion</th>
+                                            <th className="p-4 text-[10px] font-bold uppercase tracking-widest text-slate-400 text-right"></th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-slate-50">
@@ -89,14 +89,12 @@ export default function AllProjects() {
                                             const displayStatus = p.status || 'Not Started';
 
                                             return (
-                                                <tr key={p.id} className="hover:bg-slate-50/50 transition-all cursor-pointer group" onClick={() => navigate(`/manager/projects/${p.id}`)}>
-                                                    <td className="p-4 py-6">
-                                                        <div className="flex flex-col">
-                                                            <span className="text-sm font-bold text-slate-800 uppercase tracking-tight group-hover:text-primary transition-colors">{p.name}</span>
-                                                        </div>
+                                                <tr key={p.id} className="hover:bg-slate-50/50 transition-colors cursor-pointer group" onClick={() => navigate(`/manager/projects/${p.id}`)}>
+                                                    <td className="p-4 py-5 font-semibold text-slate-900 group-hover:text-primary transition-colors">
+                                                        {p.name}
                                                     </td>
                                                     <td className="p-4">
-                                                        <div className={`px-3 py-1 rounded-lg text-xs font-black uppercase tracking-widest w-fit border-2 ${(displayStatus === 'Completed' || displayStatus === 'Signed Off')
+                                                        <div className={`px-2.5 py-1 rounded text-[9px] font-bold uppercase tracking-widest w-fit border ${(displayStatus === 'Completed' || displayStatus === 'Signed Off')
                                                             ? 'bg-emerald-50 text-emerald-600 border-emerald-100'
                                                             : displayStatus === 'In Progress'
                                                                 ? 'bg-blue-50 text-blue-600 border-blue-100'
@@ -105,10 +103,8 @@ export default function AllProjects() {
                                                             {displayStatus === 'Completed' || displayStatus === 'Signed Off' ? 'Signed Off' : (displayStatus || 'Active')}
                                                         </div>
                                                     </td>
-                                                    <td className="p-4">
-                                                        <span className="text-xs font-bold text-slate-500 uppercase tracking-tight">
-                                                            {p.deadline ? new Date(p.deadline).toLocaleDateString() : 'N/A'}
-                                                        </span>
+                                                    <td className="p-4 text-xs font-bold text-slate-500 uppercase tracking-widest">
+                                                        {p.deadline ? new Date(p.deadline).toLocaleDateString() : 'N/A'}
                                                     </td>
                                                     <td className="p-4">
                                                         <div className="flex items-center gap-4">
@@ -118,14 +114,12 @@ export default function AllProjects() {
                                                                     style={{ width: `${displayCompletion}%` }}
                                                                 />
                                                             </div>
-                                                            <span className="text-xs font-black text-slate-700 min-w-[35px] text-right">{displayCompletion}%</span>
+                                                            <span className="text-[10px] font-bold text-slate-700 min-w-[35px] text-right">{displayCompletion}%</span>
                                                         </div>
                                                     </td>
                                                     <td className="p-4 text-right">
-                                                        <div className="flex items-center justify-end">
-                                                            <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-slate-50 text-slate-400 group-hover:bg-primary group-hover:text-white group-hover:translate-x-1 transition-all">
-                                                                <ChevronRight className="w-5 h-5" />
-                                                            </div>
+                                                        <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-slate-50 text-slate-400 group-hover:bg-primary/10 group-hover:text-primary transition-all ml-auto">
+                                                            <Eye className="w-4 h-4" />
                                                         </div>
                                                     </td>
                                                 </tr>
@@ -153,7 +147,7 @@ export default function AllProjects() {
                                             variant={currentPage === i + 1 ? "default" : "outline"}
                                             size="sm"
                                             onClick={() => setCurrentPage(i + 1)}
-                                            className={`rounded-lg h-9 w-9 p-0 font-black text-xs ${currentPage === i + 1 ? 'shadow-lg shadow-primary/20' : 'border-slate-200 text-slate-500'
+                                            className={`rounded-lg h-9 w-9 p-0 font-bold text-[11px] ${currentPage === i + 1 ? 'shadow-sm' : 'border-slate-200 text-slate-500'
                                                 }`}
                                         >
                                             {i + 1}

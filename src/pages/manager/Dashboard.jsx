@@ -43,33 +43,30 @@ export default function ManagerDashboard() {
     return (
         <div className="min-h-screen bg-slate-50 font-sans">
             {/* Main Content */}
-            <main className="px-8 md:px-12 py-6 max-w-7xl mx-auto space-y-5 animate-in fade-in slide-in-from-bottom-4 duration-700">
+            <main className="px-4 sm:px-8 md:px-12 py-6 max-w-7xl mx-auto space-y-5 animate-in fade-in slide-in-from-bottom-4 duration-700">
                 {/* Header */}
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div className="space-y-1">
-                        <h1 className="text-2xl font-black text-slate-800 tracking-tight uppercase">Dashboard</h1>
-                        <p className="text-slate-500 font-bold text-sm leading-relaxed max-w-lg">Overview of your project handovers and progress.</p>
+                        <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Manager Dashboard</h1>
+                        <p className="text-slate-500 text-sm font-medium leading-relaxed max-w-lg">Overview of your project handovers and progress.</p>
                     </div>
-                    {/* New Project Button Removed */}
                 </div>
 
                 {/* Stats Grid */}
-                <div className="grid gap-5 md:grid-cols-3">
+                <div className="grid gap-6 md:grid-cols-3">
                     {stats.map((stat, index) => (
-                        <Card key={index} className="border-none shadow-md shadow-slate-200/50 hover:shadow-xl transition-all duration-500 hover:-translate-y-1 bg-white/80 backdrop-blur overflow-hidden relative group">
-                            <div className={`absolute -right-6 -top-6 w-24 h-24 rounded-full ${stat.bg} opacity-50 group-hover:scale-150 transition-transform duration-700 ease-out`} />
-                            <CardHeader className="p-5 flex flex-row items-center justify-between space-y-0 pb-2 relative z-10">
-                                <CardTitle className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                        <Card key={index} className="border-slate-200 shadow-sm hover:shadow-md transition-all duration-300 bg-white group overflow-hidden relative">
+                            <div className={`absolute -right-4 -top-4 w-20 h-20 rounded-full ${stat.bg} opacity-50 group-hover:scale-150 transition-transform duration-500 ease-out`} />
+                            <CardHeader className="p-6 flex flex-row items-center justify-between space-y-0 pb-2 relative z-10">
+                                <CardTitle className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
                                     {stat.title}
                                 </CardTitle>
-                                <div className={`p-2 rounded-xl ${stat.bg} ${stat.color} shadow-sm ring-1 ring-white/50`}>
+                                <div className={`p-2 rounded-lg ${stat.bg} ${stat.color} shadow-sm border border-slate-100`}>
                                     <stat.icon className="h-4 w-4" />
                                 </div>
                             </CardHeader>
-                            <CardContent className="p-5 pt-0 relative z-10">
-                                <div className="flex items-baseline gap-2">
-                                    <div className="text-3xl font-black text-slate-800 tracking-tighter">{stat.value}</div>
-                                </div>
+                            <CardContent className="p-6 pt-0 relative z-10">
+                                <div className="text-3xl font-bold text-slate-900 tracking-tight">{stat.value}</div>
                             </CardContent>
                         </Card>
                     ))}
@@ -78,33 +75,33 @@ export default function ManagerDashboard() {
                 {/* Cards Grid: Recent Projects & Notifications */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
                     {/* Recent Projects List (Matching Admin Style) */}
-                    <Card className="border-none shadow-lg shadow-slate-200/40 flex flex-col h-[400px]">
-                        <CardHeader className="p-5 border-b border-slate-100/80 pb-4 flex flex-row items-center justify-between">
+                    <Card className="border-slate-200 shadow-sm flex flex-col h-[450px]">
+                        <CardHeader className="p-6 border-b border-slate-100 pb-4 flex flex-row items-center justify-between">
                             <div>
-                                <CardTitle className="text-base font-black text-slate-800 uppercase tracking-tight flex items-center gap-2">
-                                    <FolderKanban className="w-5 h-5 text-primary" />
+                                <CardTitle className="text-base font-semibold text-slate-800 flex items-center gap-2">
+                                    <FolderKanban className="w-4 h-4 text-primary" />
                                     Recent Projects
                                 </CardTitle>
-                                <CardDescription className="font-bold text-slate-400 text-xs">LATEST UPDATES ON YOUR PROJECTS</CardDescription>
+                                <CardDescription className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">LATEST UPDATES ON YOUR PROJECTS</CardDescription>
                             </div>
-                            <Button variant="ghost" size="sm" className="hidden sm:flex text-primary hover:text-primary hover:bg-primary/10 font-bold text-xs uppercase tracking-wide" onClick={() => navigate('/manager/projects')}>
+                            <Button variant="ghost" size="sm" className="hidden sm:flex text-primary hover:bg-primary/5 text-xs font-bold uppercase tracking-wider h-8" onClick={() => navigate('/manager/projects')}>
                                 View All <ChevronRight className="w-3 h-3 ml-1" />
                             </Button>
                         </CardHeader>
-                        <CardContent className="pt-4 flex-1 overflow-auto">
+                        <CardContent className="p-6 flex-1 overflow-auto">
                             <div className="space-y-4">
                                 {managerProjects.length > 0 ? managerProjects.slice(0, 5).map((proj, i) => (
-                                    <div key={i} className="group cursor-pointer" onClick={() => navigate(`/manager/projects/${proj.id}`)}>
-                                        <div className="flex justify-between items-center mb-2">
+                                    <div key={i} className="group cursor-pointer p-4 border border-slate-100 rounded-xl hover:bg-slate-50 transition-all" onClick={() => navigate(`/manager/projects/${proj.id}`)}>
+                                        <div className="flex justify-between items-start mb-3">
                                             <div>
-                                                <h4 className="text-sm font-black text-slate-900 group-hover:text-primary transition-colors uppercase tracking-tight">{proj.name}</h4>
-                                                <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">{proj.description}</p>
+                                                <h4 className="text-sm font-bold text-slate-900 group-hover:text-primary transition-colors">{proj.name}</h4>
+                                                <p className="text-xs text-slate-500 mt-1 line-clamp-1">{proj.description}</p>
                                             </div>
-                                            <span className={`text-[10px] font-black uppercase tracking-widest px-2 py-1 rounded-md border-2 ${(proj.status === 'Completed' || proj.status === 'Signed Off')
-                                                    ? 'bg-emerald-50 text-emerald-600 border-emerald-100'
-                                                    : proj.status === 'In Progress'
-                                                        ? 'bg-blue-50 text-blue-600 border-blue-100'
-                                                        : 'bg-slate-50 text-slate-400 border-slate-200'
+                                            <span className={`text-[9px] font-bold uppercase tracking-widest px-2 py-1 rounded-md border ${(proj.status === 'Completed' || proj.status === 'Signed Off')
+                                                ? 'bg-emerald-50 text-emerald-600 border-emerald-100'
+                                                : proj.status === 'In Progress'
+                                                    ? 'bg-blue-50 text-blue-600 border-blue-100'
+                                                    : 'bg-slate-50 text-slate-400 border-slate-200'
                                                 }`}>
                                                 {proj.status === 'Completed' || proj.status === 'Signed Off' ? 'Signed Off' : (proj.status || 'Active')}
                                             </span>
@@ -126,15 +123,15 @@ export default function ManagerDashboard() {
                     </Card>
 
                     {/* Notifications Panel */}
-                    <Card className="border-none shadow-lg shadow-slate-200/40 flex flex-col h-[400px]">
-                        <CardHeader className="p-5 border-b border-slate-100/80 pb-4">
-                            <CardTitle className="text-base font-black text-slate-800 uppercase tracking-tight flex items-center gap-2">
-                                <AlertCircle className="w-5 h-5 text-orange-500" />
+                    <Card className="border-slate-200 shadow-sm flex flex-col h-[450px]">
+                        <CardHeader className="p-6 border-b border-slate-100 pb-4">
+                            <CardTitle className="text-base font-semibold text-slate-800 flex items-center gap-2">
+                                <AlertCircle className="w-4 h-4 text-orange-500" />
                                 Attention Needed
                             </CardTitle>
-                            <CardDescription className="font-bold text-slate-400 text-[10px] uppercase tracking-wider">SECTIONS REQUIRING CLARIFICATION</CardDescription>
+                            <CardDescription className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">SECTIONS REQUIRING CLARIFICATION</CardDescription>
                         </CardHeader>
-                        <CardContent className="pt-4 flex-1 overflow-auto">
+                        <CardContent className="p-6 flex-1 overflow-auto">
                             <div className="space-y-4">
                                 {(() => {
                                     const attentionItems = managerProjects.flatMap(p =>
@@ -154,16 +151,18 @@ export default function ManagerDashboard() {
                                     return attentionItems.map((item, idx) => {
                                         const isClarify = item.status === 'Needs Clarification';
                                         return (
-                                            <div key={idx} className={`flex items-start gap-4 p-4 rounded-xl border transition-colors cursor-pointer ${isClarify ? 'bg-orange-50/50 border-orange-100 hover:bg-orange-50' : 'bg-blue-50/50 border-blue-100 hover:bg-blue-50'
+                                            <div key={idx} className={`flex items-start gap-4 p-4 rounded-xl border transition-all cursor-pointer ${isClarify ? 'bg-orange-50/50 border-orange-100 hover:bg-orange-50' : 'bg-blue-50/50 border-blue-100 hover:bg-blue-50'
                                                 }`} onClick={() => navigate(`/manager/projects/${item.projectId}`)}>
                                                 <div className="mt-1">
                                                     <div className={`w-2 h-2 rounded-full animate-pulse ${isClarify ? 'bg-orange-500' : 'bg-blue-500'}`} />
                                                 </div>
-                                                <div>
-                                                    <p className="text-sm font-black text-slate-900 uppercase tracking-tight">{item.title}</p>
-                                                    <p className="text-[10px] text-slate-500 font-bold mt-0.5">PROJECT: {item.projectName.toUpperCase()}</p>
-                                                    <p className={`text-[9px] font-black uppercase tracking-widest mt-2 w-fit px-2 py-1 rounded ${isClarify ? 'bg-orange-100/50 text-orange-600' : 'bg-blue-100/50 text-blue-600'
-                                                        }`}>{item.status}</p>
+                                                <div className="min-w-0 flex-1">
+                                                    <p className="text-sm font-bold text-slate-900 group-hover:text-primary transition-colors">{item.title}</p>
+                                                    <p className="text-[10px] text-slate-500 mt-1 uppercase font-bold tracking-tight">PROJECT: {item.projectName}</p>
+                                                    <div className="flex mt-3">
+                                                        <span className={`text-[9px] font-bold uppercase tracking-widest px-2 py-1 rounded border ${isClarify ? 'bg-orange-100/30 text-orange-600 border-orange-200' : 'bg-blue-100/30 text-blue-600 border-blue-200'
+                                                            }`}>{item.status}</span>
+                                                    </div>
                                                 </div>
                                             </div>
                                         );

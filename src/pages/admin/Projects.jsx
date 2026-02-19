@@ -2,11 +2,13 @@ import React, { useState } from 'react';
 import { useProjects } from '../../contexts/ProjectContext.jsx';
 import { useAuth } from '../../contexts/AuthContext.jsx';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
 import { Trash2, Eye, ShieldAlert, ChevronLeft, ChevronRight, Search } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Input } from '@/components/ui/input';
 import { useAdmin } from '../../contexts/AdminContext.jsx';
+import { toast } from 'sonner';
 
 export default function AdminProjects({ isEmbedded = false }) {
     const { projects, deleteProject } = useProjects();
@@ -15,6 +17,7 @@ export default function AdminProjects({ isEmbedded = false }) {
     const navigate = useNavigate();
     const [searchTerm, setSearchTerm] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
+    const [pendingDeleteId, setPendingDeleteId] = useState(null);
     const itemsPerPage = 5;
 
     // Reset pagination when search term changes
@@ -35,32 +38,40 @@ export default function AdminProjects({ isEmbedded = false }) {
     );
 
     const handleDelete = (e, id, status) => {
-        e.stopPropagation(); // Prevent row navigation
-        if (status !== 'Completed') {
-            alert("Only completed KT projects can be removed by the Admin.");
+        e.stopPropagation();
+        if (status !== 'Completed' && status !== 'Signed Off') {
+            toast.error('Only signed-off KT projects can be deleted.');
             return;
         }
-        if (window.confirm("Are you sure you want to permanently delete this project? This action cannot be undone.")) {
+        if (pendingDeleteId === id) {
+            // Second click = confirmed
             deleteProject(id);
+            setPendingDeleteId(null);
+            toast.success('Project deleted.');
+        } else {
+            // First click = arm the delete
+            setPendingDeleteId(id);
+            toast.warning('Click the delete button again to confirm deletion.', { duration: 3000 });
+            // Auto-cancel after 3s
+            setTimeout(() => setPendingDeleteId(prev => prev === id ? null : prev), 3000);
         }
     };
 
     return (
-        <div className={`px-8 md:px-12 py-6 max-w-7xl mx-auto space-y-5 animate-in fade-in duration-700 ${isEmbedded ? 'px-0 py-0' : ''}`}>
+        <div className={`px-4 sm:px-8 md:px-12 py-6 max-w-7xl mx-auto space-y-8 animate-in fade-in duration-500 ${isEmbedded ? 'px-4 sm:px-0 py-0' : ''}`}>
 
             {!isEmbedded && (
-                <header className="flex flex-col md:flex-row md:items-center justify-between gap-10">
+                <header className="flex flex-col md:flex-row md:items-center justify-between gap-6">
                     <div className="space-y-1">
-                        <h1 className="text-2xl font-black text-slate-800 tracking-tight uppercase">Projects</h1>
-                        <p className="text-slate-500 font-bold text-sm leading-relaxed max-w-lg">Overview of all system-wide knowledge transfer projects.</p>
+                        <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Projects Management</h1>
+                        <p className="text-slate-500 text-sm font-medium">Monitor and manage all active knowledge transfer initiatives.</p>
                     </div>
                     <div className="flex items-center gap-4">
-                        <div className="relative w-72 group">
+                        <div className="relative w-80 group">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-primary transition-colors" />
-                            <input
-                                type="text"
-                                placeholder="Search by name or manager..."
-                                className="w-full pl-10 pr-4 h-11 bg-white border border-slate-200 rounded-xl shadow-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none font-bold text-sm transition-all"
+                            <Input
+                                placeholder="Search projects or managers..."
+                                className="w-full pl-10 pr-4 h-10 bg-white border border-slate-200 rounded-lg shadow-sm focus:ring-primary/20 focus:border-primary outline-none text-sm transition-all font-medium"
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                             />
@@ -71,94 +82,92 @@ export default function AdminProjects({ isEmbedded = false }) {
 
             <div className="grid grid-cols-1 gap-6">
                 {filteredProjects.length === 0 ? (
-                    <Card className="border-dashed py-20 bg-slate-50/50 rounded-[2rem]">
-                        <CardContent className="flex flex-col items-center justify-center opacity-40">
-                            <ShieldAlert className="w-12 h-12 mb-4" />
-                            <p className="font-bold uppercase tracking-widest text-xs">No project records found</p>
+                    <Card className="border-dashed py-24 bg-slate-50/50 rounded-xl">
+                        <CardContent className="flex flex-col items-center justify-center text-slate-400">
+                            <ShieldAlert className="w-12 h-12 mb-4 opacity-20" />
+                            <p className="font-medium text-sm">No project records found matching your search</p>
                         </CardContent>
                     </Card>
                 ) : (
                     <div className="space-y-6">
-                        <div className="bg-white/80 backdrop-blur border-none shadow-md shadow-slate-200/50 rounded-[1.5rem] md:rounded-[2rem] overflow-hidden">
+                        <div className="bg-white border border-slate-200 shadow-sm rounded-xl overflow-hidden">
                             <div className="overflow-x-auto">
-                                <table className="w-full text-left border-collapse min-w-[700px] md:min-w-0">
-                                    <thead className="bg-slate-50/50 border-b border-slate-100">
+                                <table className="w-full text-left border-collapse min-w-[800px]">
+                                    <thead className="bg-slate-50/50 border-b border-slate-200">
                                         <tr>
-                                            <th className="p-4 text-xs font-bold uppercase tracking-wider text-slate-500">Project Name</th>
-                                            <th className="p-4 text-xs font-bold uppercase tracking-wider text-slate-500">Manager</th>
-                                            <th className="p-4 text-xs font-bold uppercase tracking-wider text-slate-500">Status</th>
-                                            <th className="p-4 text-xs font-bold uppercase tracking-wider text-slate-500">Completion</th>
-                                            <th className="p-4 text-xs font-bold uppercase tracking-wider text-slate-500 text-left">Timeline</th>
-                                            <th className="p-4 text-xs font-bold uppercase tracking-wider text-slate-500 text-right"></th>
+                                            <th className="p-4 text-[10px] font-bold uppercase tracking-widest text-slate-400">Project Detail</th>
+                                            <th className="p-4 text-[10px] font-bold uppercase tracking-widest text-slate-400">Owner / Manager</th>
+                                            <th className="p-4 text-[10px] font-bold uppercase tracking-widest text-slate-400 text-center">Status</th>
+                                            <th className="p-4 text-[10px] font-bold uppercase tracking-widest text-slate-400">Progress</th>
+                                            <th className="p-4 text-[10px] font-bold uppercase tracking-widest text-slate-400">Deadline</th>
+                                            <th className="p-4 text-[11px] font-bold uppercase tracking-widest text-slate-400 text-right pr-6"></th>
                                         </tr>
                                     </thead>
-                                    <tbody className="divide-y divide-slate-50">
+                                    <tbody className="divide-y divide-slate-100">
                                         {paginatedProjects.map((p) => {
                                             const displayCompletion = p.completion || 0;
 
                                             return (
-                                                <tr key={p.id} className="hover:bg-slate-50/50 transition-all cursor-pointer group" onClick={() => navigate(`/admin/projects/${p.id}`)}>
-                                                    <td className="p-4 py-8">
-                                                        <div className="flex flex-col">
-                                                            <span className="text-sm font-black text-slate-800 uppercase tracking-tight group-hover:text-primary transition-colors">{p.name}</span>
+                                                <tr key={p.id} className="hover:bg-slate-50/50 transition-colors cursor-pointer group" onClick={() => navigate(`/admin/projects/${p.id}`)}>
+                                                    <td className="p-4 py-5">
+                                                        <div className="flex flex-col gap-0.5">
+                                                            <span className="text-sm font-semibold text-slate-900 group-hover:text-primary transition-colors">{p.name}</span>
+                                                            <span className="text-[11px] text-slate-400 font-medium truncate max-w-[200px]">{p.description || 'No description provided.'}</span>
                                                         </div>
                                                     </td>
                                                     <td className="p-4">
-                                                        <div className="flex items-center gap-3">
+                                                        <div className="flex items-center gap-2.5">
                                                             {(() => {
                                                                 const manager = users.find(u => u.id === p.managerId) || users.find(u => u.name === p.managerName) || { name: p.managerName };
                                                                 return (
                                                                     <>
-                                                                        <div className="w-8 h-8 rounded-full bg-primary/5 flex items-center justify-center text-xs font-black text-primary border border-primary/20">
+                                                                        <div className="w-7 h-7 rounded-full bg-slate-100 flex items-center justify-center text-[10px] font-bold text-slate-600 border border-slate-200">
                                                                             {manager.name?.charAt(0) || 'M'}
                                                                         </div>
-                                                                        <span className="text-xs font-black text-slate-700 uppercase tracking-tight">{manager.name}</span>
+                                                                        <span className="text-xs font-medium text-slate-700">{manager.name}</span>
                                                                     </>
                                                                 );
                                                             })()}
                                                         </div>
                                                     </td>
                                                     <td className="p-4">
-                                                        <div className={`px-3 py-1 rounded-lg text-xs font-black uppercase tracking-widest w-fit border-2 ${(p.status === 'Completed' || p.status === 'Signed Off')
-                                                            ? 'bg-emerald-50 text-emerald-600 border-emerald-100'
-                                                            : p.status === 'In Progress'
-                                                                ? 'bg-blue-50 text-blue-600 border-blue-100'
-                                                                : 'bg-slate-50 text-slate-400 border-slate-200'
-                                                            }`}>
-                                                            {p.status === 'Completed' || p.status === 'Signed Off' ? 'Signed Off' : (p.status || 'Active')}
+                                                        <div className="flex justify-center">
+                                                            <Badge variant={(p.status === 'Completed' || p.status === 'Signed Off') ? 'success' : p.status === 'In Progress' ? 'blue' : 'soft'}>
+                                                                {p.status === 'Completed' || p.status === 'Signed Off' ? 'Signed Off' : (p.status || 'Active')}
+                                                            </Badge>
                                                         </div>
                                                     </td>
                                                     <td className="p-4">
-                                                        <div className="flex items-center gap-4">
-                                                            <div className="flex-1 w-20 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                                                        <div className="flex items-center gap-3">
+                                                            <div className="flex-1 w-24 h-1.5 bg-slate-100 rounded-full overflow-hidden">
                                                                 <div
-                                                                    className={`h-full transition-all duration-1000 ${displayCompletion === 100 ? 'bg-emerald-500' : 'bg-primary'}`}
+                                                                    className={`h-full transition-all duration-1000 ${displayCompletion === 100 ? 'bg-emerald-500' : 'bg-primary/70'}`}
                                                                     style={{ width: `${displayCompletion}%` }}
                                                                 />
                                                             </div>
-                                                            <span className="text-xs font-black text-slate-700 min-w-[35px] text-right">{displayCompletion}%</span>
+                                                            <span className="text-[11px] font-semibold text-slate-600 min-w-[30px]">{displayCompletion}%</span>
                                                         </div>
                                                     </td>
                                                     <td className="p-4">
-                                                        <div className="flex flex-col">
-                                                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Due</span>
-                                                            <span className="text-xs font-black text-slate-700 uppercase tracking-tight">
-                                                                {p.deadline ? new Date(p.deadline).toLocaleDateString() : 'N/A'}
-                                                            </span>
-                                                        </div>
+                                                        <span className="text-xs font-medium text-slate-600">
+                                                            {p.deadline ? new Date(p.deadline).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : '---'}
+                                                        </span>
                                                     </td>
-                                                    <td className="p-4 text-right">
-                                                        <div className="flex items-center justify-end gap-3">
+                                                    <td className="p-4 text-right pr-6">
+                                                        <div className="flex items-center justify-end gap-2">
                                                             <Button
                                                                 variant="ghost"
                                                                 size="icon"
-                                                                className="w-9 h-9 rounded-xl hover:bg-red-50 hover:text-red-600 transition-colors"
+                                                                className={`w-8 h-8 rounded-md transition-colors text-slate-400 ${pendingDeleteId === p.id
+                                                                    ? 'bg-red-100 text-red-600 hover:bg-red-200'
+                                                                    : 'hover:bg-red-50 hover:text-red-600'
+                                                                    }`}
                                                                 onClick={(e) => handleDelete(e, p.id, p.status)}
                                                             >
-                                                                <Trash2 className="w-4 h-4" />
+                                                                <Trash2 className="w-3.5 h-3.5" />
                                                             </Button>
-                                                            <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-slate-50 text-slate-400 group-hover:bg-primary group-hover:text-white group-hover:translate-x-1 transition-all">
-                                                                <ChevronRight className="w-5 h-5" />
+                                                            <div className="w-8 h-8 rounded-md flex items-center justify-center text-slate-300 group-hover:bg-primary group-hover:text-white transition-all">
+                                                                <ChevronRight className="w-4 h-4" />
                                                             </div>
                                                         </div>
                                                     </td>
@@ -172,42 +181,47 @@ export default function AdminProjects({ isEmbedded = false }) {
 
                         {/* Pagination Controls */}
                         {totalPages > 1 && (
-                            <div className="flex items-center justify-center gap-2 pt-4">
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    disabled={currentPage === 1}
-                                    onClick={() => setCurrentPage(prev => prev - 1)}
-                                    className="rounded-lg h-9 w-9 p-0 border-slate-200"
-                                >
-                                    <ChevronLeft className="w-4 h-4" />
-                                </Button>
-                                {[...Array(totalPages)].map((_, i) => (
+                            <div className="flex items-center justify-between px-2 pt-2">
+                                <p className="text-[11px] font-medium text-slate-400">
+                                    Showing {(currentPage - 1) * itemsPerPage + 1} to {Math.min(currentPage * itemsPerPage, filteredProjects.length)} of {filteredProjects.length} projects
+                                </p>
+                                <div className="flex items-center gap-1.5">
                                     <Button
-                                        key={i}
-                                        variant={currentPage === i + 1 ? "default" : "outline"}
+                                        variant="outline"
                                         size="sm"
-                                        onClick={() => setCurrentPage(i + 1)}
-                                        className={`rounded-lg h-9 w-9 p-0 font-black text-xs ${currentPage === i + 1 ? 'shadow-lg shadow-primary/20 bg-primary text-white' : 'border-slate-200 text-slate-500 hover:bg-slate-50'
-                                            }`}
+                                        disabled={currentPage === 1}
+                                        onClick={() => setCurrentPage(prev => prev - 1)}
+                                        className="rounded-lg h-8 w-8 p-0 border-slate-200"
                                     >
-                                        {i + 1}
+                                        <ChevronLeft className="w-4 h-4" />
                                     </Button>
-                                ))}
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    disabled={currentPage === totalPages}
-                                    onClick={() => setCurrentPage(prev => prev + 1)}
-                                    className="rounded-lg h-9 w-9 p-0 border-slate-200"
-                                >
-                                    <ChevronRight className="w-4 h-4" />
-                                </Button>
+                                    {[...Array(totalPages)].map((_, i) => (
+                                        <Button
+                                            key={i}
+                                            variant={currentPage === i + 1 ? "default" : "outline"}
+                                            size="sm"
+                                            onClick={() => setCurrentPage(i + 1)}
+                                            className={`rounded-lg h-8 w-8 p-0 text-[11px] font-semibold ${currentPage === i + 1 ? 'bg-primary text-white border-primary' : 'border-slate-200 text-slate-500 hover:bg-slate-50'
+                                                }`}
+                                        >
+                                            {i + 1}
+                                        </Button>
+                                    ))}
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        disabled={currentPage === totalPages}
+                                        onClick={() => setCurrentPage(prev => prev + 1)}
+                                        className="rounded-lg h-8 w-8 p-0 border-slate-200"
+                                    >
+                                        <ChevronRight className="w-4 h-4" />
+                                    </Button>
+                                </div>
                             </div>
                         )}
                     </div>
                 )}
             </div>
-        </div >
+        </div>
     );
 }
