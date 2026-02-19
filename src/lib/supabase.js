@@ -15,6 +15,7 @@ export const supabase = (supabaseUrl && supabaseAnonKey)
         auth: {
             persistSession: true,
             autoRefreshToken: true,
+            storage: window.sessionStorage,
         }
     })
     : {

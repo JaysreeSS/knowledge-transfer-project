@@ -170,7 +170,7 @@ export default function AdminDashboard() {
                     <CardContent className="p-6">
                         <div className="space-y-6">
                             {projectList.length > 0 ? projectList.map((proj, i) => (
-                                <div key={i} className="group">
+                                <div key={i} className="group cursor-pointer" onClick={() => navigate(`/admin/projects/${proj.id}`)}>
                                     <div className="flex justify-between items-center mb-2.5">
                                         <div>
                                             <h4 className="text-sm font-semibold text-slate-900 group-hover:text-primary transition-colors">{proj.name}</h4>

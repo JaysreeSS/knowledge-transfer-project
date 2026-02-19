@@ -30,7 +30,7 @@ export const AuthProvider = ({ children }) => {
                 await fetchProfile(session.user.id, session.user.email);
             } else {
                 setUser(null);
-                localStorage.removeItem("kt_user");
+                sessionStorage.removeItem("kt_user");
             }
         });
 
@@ -101,7 +101,7 @@ export const AuthProvider = ({ children }) => {
                     isAdmin: normalizedRole === 'System Admin'
                 };
                 setUser(userWithAdmin);
-                localStorage.setItem("kt_user", JSON.stringify(userWithAdmin));
+                sessionStorage.setItem("kt_user", JSON.stringify(userWithAdmin));
                 return userWithAdmin;
             }
 
@@ -170,7 +170,7 @@ export const AuthProvider = ({ children }) => {
         console.log("[Auth] Logging out...");
         await supabase.auth.signOut();
         setUser(null);
-        localStorage.removeItem("kt_user");
+        sessionStorage.removeItem("kt_user");
     };
 
     return (
