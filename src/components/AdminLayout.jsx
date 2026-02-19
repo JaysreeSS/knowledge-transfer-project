@@ -54,21 +54,21 @@ export default function AdminLayout() {
                 </button>
 
                 {/* Logo Area */}
-                <div className={`flex items-center px-6 border-b border-slate-50 transition-all duration-300 ${collapsed ? 'h-20 justify-center' : 'h-24 flex-col justify-center items-start'}`}>
-                    {/* <img
-                        src={collapsed ? logoSmall : logo}
+                <div className={`flex items-center px-6 border-b border-slate-50 transition-all duration-300 ${collapsed ? 'h-20 justify-center' : 'h-24 justify-center items-start'}`}>
+                    <img
+                        src={logoSmall}
                         alt="Logo"
-                        className={`transition-all duration-300 object-contain ${collapsed ? 'h-8 w-8' : 'h-8'}`}
-                    /> */}
-                    <div className={`overflow-hidden transition-all duration-300 ${collapsed ? 'w-0 opacity-0 h-0' : 'w-auto opacity-100 mt-1'}`}>
-                        <span className="text-lg font-black text-slate-800 tracking-tighter uppercase whitespace-nowrap block">
-                            KT PORTAL
+                        className={`transition-all duration-300 ${collapsed ? 'h-8 w-8' : 'h-10 w-auto'}`}
+                    />
+                    {!collapsed && (
+                        <span className="text-lg font-bold text-slate-900 tracking-tight ml-3 whitespace-nowrap">
+                            Knowledge<span className="text-primary">Transfer</span>
                         </span>
-                    </div>
+                    )}
                 </div>
 
                 {/* Navigation */}
-                <nav className={`flex-1 px-3 py-6 space-y-2 ${collapsed ? '' : 'overflow-y-auto overflow-x-hidden'}`}>
+                <nav className={`flex-1 px-4 py-8 space-y-1.5 ${collapsed ? '' : 'overflow-y-auto overflow-x-hidden'}`}>
                     {navItems.map((item) => {
                         const Icon = item.icon;
                         const isActive = item.path === '/admin'
@@ -80,25 +80,25 @@ export default function AdminLayout() {
                                 key={item.path}
                                 to={item.path}
                                 className={`
-                                    flex items-center px-3 py-3 rounded-xl transition-all duration-200 group relative
+                                    flex items-center px-3 py-2.5 rounded-lg transition-all duration-200 group relative
                                     ${isActive
                                         ? 'bg-primary/5 text-primary'
-                                        : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'}
+                                        : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'}
                                     ${collapsed ? 'justify-center' : ''}
                                 `}
                             >
-                                <Icon className={`w-5 h-5 transition-colors ${isActive ? 'text-primary' : 'text-slate-400 group-hover:text-slate-600'} ${collapsed ? '' : 'mr-3'}`} />
+                                <Icon className={`w-[18px] h-[18px] transition-colors ${isActive ? 'text-primary' : 'text-slate-400 group-hover:text-slate-600'} ${collapsed ? '' : 'mr-3'}`} />
 
                                 {!collapsed && (
-                                    <span className={`font-bold text-[11px] uppercase tracking-wider truncate`}>{item.label}</span>
+                                    <span className={`text-[13px] font-medium tracking-tight truncate`}>{item.label}</span>
                                 )}
 
                                 {isActive && !collapsed && (
-                                    <div className="absolute right-0 h-6 w-1 bg-primary rounded-l-full" />
+                                    <div className="absolute right-0 h-5 w-1 bg-primary rounded-l-full" />
                                 )}
 
                                 {collapsed && (
-                                    <div className="absolute left-[calc(100%+10px)] top-1/2 -translate-y-1/2 bg-slate-900 text-white text-xs font-bold px-3 py-2 rounded-md opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 whitespace-nowrap shadow-xl">
+                                    <div className="absolute left-[calc(100%+12px)] top-1/2 -translate-y-1/2 bg-slate-900 text-white text-[11px] font-medium px-3 py-2 rounded shadow-2xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 whitespace-nowrap">
                                         {item.label}
                                         <div className="absolute -left-1 top-1/2 -translate-y-1/2 border-y-4 border-y-transparent border-r-4 border-r-slate-900"></div>
                                     </div>
@@ -109,10 +109,10 @@ export default function AdminLayout() {
                 </nav>
 
                 {/* User / Logout */}
-                <div className="p-4 border-t border-slate-100 mt-auto flex flex-col gap-3 transition-all duration-300">
+                <div className="p-4 border-t border-slate-100 mt-auto bg-slate-50/50 transition-all duration-300">
                     {collapsed ? (
-                        <div className="flex flex-col items-center gap-4 animate-in fade-in duration-500">
-                            <div className="w-10 h-10 min-w-[40px] rounded-2xl bg-primary/10 flex items-center justify-center text-primary font-bold text-sm">
+                        <div className="flex flex-col items-center gap-4 py-2">
+                            <div className="w-9 h-9 rounded-lg bg-white border border-slate-200 flex items-center justify-center text-primary font-bold text-xs shadow-sm">
                                 {user?.name?.substring(0, 2).toUpperCase() || 'AD'}
                             </div>
                             <button
@@ -124,24 +124,24 @@ export default function AdminLayout() {
                             </button>
                         </div>
                     ) : (
-                        <div className="flex flex-col gap-3 animate-in slide-in-from-left-4 duration-500">
-                            <div className="flex items-center gap-3 p-3 bg-white border border-slate-200 rounded-2xl shadow-sm group hover:border-primary/20 transition-all">
-                                <div className="w-10 h-10 min-w-[40px] rounded-2xl bg-primary/10 flex items-center justify-center text-primary font-bold text-sm">
+                        <div className="space-y-4">
+                            <div className="flex items-center gap-3 p-2 bg-white border border-slate-200 rounded-xl shadow-sm group hover:border-primary/20 transition-all">
+                                <div className="w-9 h-9 min-w-[36px] rounded-lg bg-primary/5 border border-primary/10 flex items-center justify-center text-primary font-semibold text-xs">
                                     {user?.name?.substring(0, 2).toUpperCase() || 'AD'}
                                 </div>
                                 <div className="overflow-hidden">
-                                    <p className="font-bold text-slate-900 text-sm truncate">{user?.name}</p>
-                                    <p className="text-xs text-slate-500 truncate">{user?.role || 'Administrator'}</p>
+                                    <p className="font-semibold text-slate-900 text-[13px] leading-tight truncate">{user?.name}</p>
+                                    <p className="text-[11px] text-slate-500 leading-tight truncate mt-0.5">{user?.role || 'Administrator'}</p>
                                 </div>
                             </div>
 
                             <Button
                                 variant="outline"
                                 onClick={handleLogout}
-                                className="w-full justify-center gap-2 border-slate-200 text-slate-500 hover:text-red-600 hover:bg-red-50 hover:border-red-100 rounded-xl font-bold text-xs h-10 shadow-sm bg-white"
+                                className="w-full justify-center gap-2 border-slate-200 text-slate-500 hover:text-red-600 hover:bg-red-50 hover:border-red-100 rounded-lg font-medium text-xs h-9 shadow-sm bg-white"
                             >
-                                <LogOut className="w-4 h-4" />
-                                Logout
+                                <LogOut className="w-3.5 h-3.5" />
+                                Sign Out
                             </Button>
                         </div>
                     )}
@@ -151,7 +151,7 @@ export default function AdminLayout() {
             {/* Mobile Menu Overlay */}
             {isMobileMenuOpen && (
                 <div
-                    className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-40 md:hidden animate-in fade-in duration-300"
+                    className="fixed inset-0 bg-slate-900/40 backdrop-blur-[2px] z-40 md:hidden animate-in fade-in duration-300"
                     onClick={() => setIsMobileMenuOpen(false)}
                 />
             )}
@@ -162,7 +162,9 @@ export default function AdminLayout() {
                     }`}
             >
                 <div className="h-20 flex items-center px-6 border-b border-slate-50">
-                    {/* <img src={logo} alt="Logo" className="h-7" /> */}
+                    <span className="text-xl font-bold text-slate-900 tracking-tight">
+                        Knowledge<span className="text-primary">Transfer</span>
+                    </span>
                     <button
                         onClick={() => setIsMobileMenuOpen(false)}
                         className="ml-auto p-2 text-slate-400 hover:text-slate-600 focus:outline-none"
@@ -171,7 +173,7 @@ export default function AdminLayout() {
                     </button>
                 </div>
 
-                <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
+                <nav className="flex-1 px-4 py-8 space-y-1.5 overflow-y-auto">
                     {navItems.map((item) => {
                         const Icon = item.icon;
                         const isActive = item.path === '/admin'
@@ -182,22 +184,22 @@ export default function AdminLayout() {
                             <NavLink
                                 key={item.path}
                                 to={item.path}
-                                className={`flex items-center px-4 py-4 rounded-xl transition-all duration-200 ${isActive ? 'bg-primary/5 text-primary' : 'text-slate-500 hover:bg-slate-50'}`}
+                                className={`flex items-center px-4 py-3 rounded-lg transition-all duration-200 ${isActive ? 'bg-primary/5 text-primary' : 'text-slate-600 hover:bg-slate-50'}`}
                             >
-                                <Icon className={`w-5 h-5 mr-4 ${isActive ? 'text-primary' : 'text-slate-400'}`} />
-                                <span className={`font-bold text-xs uppercase tracking-wider`}>{item.label}</span>
+                                <Icon className={`w-[18px] h-[18px] mr-4 ${isActive ? 'text-primary' : 'text-slate-400'}`} />
+                                <span className={`font-medium text-[13px] tracking-tight`}>{item.label}</span>
                             </NavLink>
                         );
                     })}
                 </nav>
 
-                <div className="p-6 border-t border-slate-100">
+                <div className="p-6 border-t border-slate-100 bg-slate-50/50">
                     <Button
                         variant="ghost"
                         onClick={handleLogout}
-                        className="w-full justify-start gap-3 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-xl font-bold text-sm h-12"
+                        className="w-full justify-start gap-4 text-slate-600 hover:text-red-600 hover:bg-red-50 rounded-lg font-medium text-sm h-11"
                     >
-                        <LogOut className="w-5 h-5" />
+                        <LogOut className="w-4 h-4" />
                         Sign Out
                     </Button>
                 </div>
@@ -206,21 +208,24 @@ export default function AdminLayout() {
             {/* Main Content Area */}
             <main ref={mainRef} className="flex-1 overflow-x-hidden overflow-y-auto bg-slate-50 relative flex flex-col">
                 {/* Mobile Top Bar */}
-                <header className="h-16 bg-white border-b border-slate-200 px-5 flex items-center justify-between md:hidden sticky top-0 z-30 shadow-sm">
-                    <div className="flex items-center gap-3">
+                <header className="h-16 bg-white border-b border-slate-200 px-6 flex items-center justify-between md:hidden sticky top-0 z-30">
+                    <div className="flex items-center gap-4">
                         <button
                             onClick={() => setIsMobileMenuOpen(true)}
-                            className="p-2 -ml-2 text-slate-500 hover:text-primary transition-colors"
+                            className="p-1 -ml-1 text-slate-500 hover:text-primary transition-colors"
                         >
-                            <div className="w-6 h-5 flex flex-col justify-between">
+                            <div className="w-5 h-4 flex flex-col justify-between">
                                 <span className="h-0.5 w-full bg-current rounded-full" />
                                 <span className="h-0.5 w-full bg-current rounded-full" />
-                                <span className="h-0.5 w-2/3 bg-current rounded-full" />
+                                <span className="h-0.5 w-full bg-current rounded-full" />
                             </div>
                         </button>
-                        {/* <img src={logo} alt="Logo" className="h-6" /> */}
+                        <div className="flex items-center gap-2">
+                            <img src={logoSmall} alt="Logo" className="h-7 w-auto" />
+                            <span className="text-lg font-bold text-slate-900 tracking-tight">Knowledge<span className="text-primary">Transfer</span></span>
+                        </div>
                     </div>
-                    <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary font-black text-[10px]">
+                    <div className="w-8 h-8 rounded-lg bg-primary/5 border border-primary/10 flex items-center justify-center text-primary font-bold text-[10px]">
                         {user?.name?.substring(0, 2).toUpperCase()}
                     </div>
                 </header>

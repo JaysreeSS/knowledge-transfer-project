@@ -9,7 +9,7 @@ export default function DashboardRedirect() {
 
     if (!user) return <Navigate to="/" replace />;
     if (user.isAdmin) return <Navigate to="/admin" replace />;
-    if (user.role === 'manager') return <Navigate to="/manager" replace />;
+    if (user.role === 'Manager') return <Navigate to="/manager" replace />;
 
     // Handle role mapping for contributors/receivers
     if (loading) return (

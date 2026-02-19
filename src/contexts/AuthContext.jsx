@@ -90,9 +90,15 @@ export const AuthProvider = ({ children }) => {
 
             if (data) {
                 console.log("[Auth] Profile found:", data.username);
+                // Normalize old roles if present in legacy sessions
+                let normalizedRole = data.role;
+                if (data.role === 'admin') normalizedRole = 'System Admin';
+                if (data.role === 'manager') normalizedRole = 'Manager';
+
                 const userWithAdmin = {
                     ...data,
-                    isAdmin: data.role === 'admin'
+                    role: normalizedRole,
+                    isAdmin: normalizedRole === 'System Admin'
                 };
                 setUser(userWithAdmin);
                 localStorage.setItem("kt_user", JSON.stringify(userWithAdmin));

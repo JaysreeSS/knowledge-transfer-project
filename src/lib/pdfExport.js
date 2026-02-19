@@ -1,5 +1,6 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { toast } from 'sonner';
 
 /**
  * Formats functional roles to match the Admin UI display standards.
@@ -8,15 +9,8 @@ import autoTable from 'jspdf-autotable';
  */
 const formatFunctionalRole = (role) => {
     if (!role) return '-';
-    const mapping = {
-        'developer': 'Developer',
-        'qa': 'QA Engineer',
-        'ba': 'Business Analyst',
-        'support': 'Support',
-        'manager': 'Manager',
-        'admin': 'System Admin'
-    };
-    return mapping[role.toLowerCase()] || role.charAt(0).toUpperCase() + role.slice(1);
+    // Roles are now stored as full display strings (e.g. "QA Engineer", "Business Analyst")
+    return role;
 };
 
 /**
@@ -247,7 +241,7 @@ export const exportProjectToPDF = (project) => {
 
     } catch (error) {
         console.error("Error generating PDF:", error);
-        alert("Failed to generate PDF report. Please check the console for details.");
+        toast.error('Failed to generate PDF report. Please check the console for details.');
     }
 };
 

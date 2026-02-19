@@ -9,6 +9,7 @@ import {
     LogOut
 } from 'lucide-react';
 import logo from '../assets/logo.png';
+import logoSmall from '../assets/logo-small.png';
 
 export default function ICRLayout() {
     const { user, logout } = useAuth();
@@ -49,9 +50,9 @@ export default function ICRLayout() {
                         </div>
                     </button>
 
-                    <div className="flex items-center gap-3 cursor-pointer" onClick={() => navigate('/icr/dashboard')}>
-                        {/* <img src={logo} alt="Logo" className="h-7 md:h-8" /> */}
-                        <span className="font-black text-slate-800 tracking-tight uppercase text-base hidden sm:block">KT Portal</span>
+                    <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate('/icr/dashboard')}>
+                        <img src={logoSmall} alt="Logo" className="h-8 w-auto" />
+                        <span className="font-bold text-slate-900 tracking-tighter uppercase text-lg hidden sm:block">Knowledge<span className="text-primary italic">Transfer</span></span>
                     </div>
 
                     <nav className="hidden md:flex items-center gap-1">
@@ -61,7 +62,7 @@ export default function ICRLayout() {
                                 <button
                                     key={item.path}
                                     onClick={() => navigate(item.path)}
-                                    className={`flex items-center gap-2 px-4 py-2 rounded-lg text-[11px] font-bold uppercase tracking-wider transition-all ${isActive
+                                    className={`flex items-center gap-2 px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all ${isActive
                                         ? 'bg-primary/10 text-primary'
                                         : 'text-slate-400 hover:bg-slate-50 hover:text-slate-900'
                                         }`}
@@ -78,9 +79,9 @@ export default function ICRLayout() {
                     <div className="flex items-center gap-3 md:gap-4">
                         <div className="text-right hidden sm:block">
                             <p className="text-sm font-bold text-slate-900">{user?.name}</p>
-                            <p className="text-xs text-slate-500 uppercase tracking-wider">{user?.role || 'Team Member'}</p>
+                            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{user?.role || 'Team Member'}</p>
                         </div>
-                        <div className="md:hidden w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary font-black text-[10px]">
+                        <div className="md:hidden w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary font-bold text-[10px] border border-primary/10">
                             {user?.name?.substring(0, 2).toUpperCase()}
                         </div>
                         <Button variant="ghost" size="icon" onClick={handleLogout} className="rounded-xl hover:bg-red-50 hover:text-red-600 hidden md:flex">
@@ -104,7 +105,8 @@ export default function ICRLayout() {
                     }`}
             >
                 <div className="h-20 flex items-center px-6 border-b border-slate-50">
-                    {/* <img src={logo} alt="Logo" className="h-7" /> */}
+                    <img src={logoSmall} alt="Logo" className="h-8 w-auto" />
+                    <span className="font-bold text-slate-900 tracking-tighter uppercase text-lg ml-3">Knowledge<span className="text-primary italic">Transfer</span></span>
                     <button
                         onClick={() => setIsMobileMenuOpen(false)}
                         className="ml-auto p-2 text-slate-400 hover:text-slate-600 focus:outline-none"
