@@ -21,7 +21,9 @@ import {
     ThumbsUp,
     HelpCircle,
     RotateCcw,
-    Users
+    Users,
+    Link as LinkIcon,
+    ExternalLink
 } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 
@@ -261,63 +263,102 @@ export default function OnboardingProjectDetails() {
                                 </CardContent>
                             </Card>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pb-12">
-                                {/* Attachments */}
-                                <Card className="border-slate-200 shadow-sm rounded-xl bg-white overflow-hidden h-fit">
-                                    <CardHeader className="p-4 border-b border-slate-50 bg-slate-50/30 flex flex-row justify-between items-center">
-                                        <CardTitle className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                                            <Paperclip className="w-3.5 h-3.5" /> Attachments
-                                        </CardTitle>
-                                    </CardHeader>
-                                    <CardContent className="p-4 space-y-2">
-                                        {(section.attachments || []).length === 0 ? (
-                                            <p className="text-[10px] font-bold text-slate-400 uppercase text-center py-8 border border-dashed border-slate-100 rounded-xl bg-slate-50/50">No files attached</p>
-                                        ) : (
-                                            (section.attachments || []).map((att, idx) => (
-                                                <div key={idx} className="flex items-center justify-between p-3 bg-slate-50/50 border border-slate-100 rounded-xl group hover:border-slate-200 transition-all">
-                                                    <div className="flex items-center gap-3 overflow-hidden">
-                                                        <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center border border-slate-200 text-slate-400 shadow-sm">
-                                                            <FileText className="w-4 h-4" />
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pb-12 items-stretch">
+                                {/* Left Column: Attachments and Reference Links */}
+                                <div className="flex flex-col gap-4">
+                                    {/* Attachments */}
+                                    <Card className="border-slate-200 shadow-sm rounded-xl bg-white overflow-hidden shrink-0">
+                                        <CardHeader className="p-4 border-b border-slate-50 bg-slate-50/30 flex flex-row justify-between items-center">
+                                            <CardTitle className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                                                <Paperclip className="w-3.5 h-3.5" /> Attachments
+                                            </CardTitle>
+                                        </CardHeader>
+                                        <CardContent className="p-4 space-y-2 max-h-[220px] overflow-y-auto custom-scrollbar">
+                                            {(section.attachments || []).length === 0 ? (
+                                                <p className="text-[10px] font-bold text-slate-400 uppercase text-center py-8 border border-dashed border-slate-100 rounded-xl bg-slate-50/50">No files attached</p>
+                                            ) : (
+                                                (section.attachments || []).map((att, idx) => (
+                                                    <div key={idx} className="flex items-center justify-between p-3 bg-slate-50/50 border border-slate-100 rounded-xl group hover:border-slate-200 transition-all">
+                                                        <div className="flex items-center gap-3 overflow-hidden">
+                                                            <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center border border-slate-200 text-slate-400 shadow-sm">
+                                                                <FileText className="w-4 h-4" />
+                                                            </div>
+                                                            <div className="overflow-hidden">
+                                                                <p className="text-[11px] font-bold text-slate-700 truncate tracking-tight">{att.fileName}</p>
+                                                                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{att.fileSize}</p>
+                                                            </div>
                                                         </div>
-                                                        <div className="overflow-hidden">
-                                                            <p className="text-[11px] font-bold text-slate-700 truncate tracking-tight">{att.fileName}</p>
-                                                            <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{att.fileSize}</p>
-                                                        </div>
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            className="w-8 h-8 rounded-lg hover:bg-slate-200"
+                                                            onClick={() => {
+                                                                if (att.url) {
+                                                                    const link = document.createElement('a');
+                                                                    link.href = att.url;
+                                                                    link.download = att.fileName || 'download';
+                                                                    document.body.appendChild(link);
+                                                                    link.click();
+                                                                    document.body.removeChild(link);
+                                                                }
+                                                            }}
+                                                        >
+                                                            <Download className="w-3 h-3 text-slate-500" />
+                                                        </Button>
                                                     </div>
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        className="w-8 h-8 rounded-lg hover:bg-slate-200"
-                                                        onClick={() => {
-                                                            if (att.url) {
-                                                                const link = document.createElement('a');
-                                                                link.href = att.url;
-                                                                link.download = att.fileName || 'download';
-                                                                document.body.appendChild(link);
-                                                                link.click();
-                                                                document.body.removeChild(link);
-                                                            }
-                                                        }}
-                                                    >
-                                                        <Download className="w-3 h-3 text-slate-500" />
-                                                    </Button>
-                                                </div>
-                                            ))
-                                        )}
-                                    </CardContent>
-                                </Card>
+                                                ))
+                                            )}
+                                        </CardContent>
+                                    </Card>
 
-                                {/* Discussion */}
-                                <Card className="border-slate-200 shadow-sm rounded-xl bg-white overflow-hidden h-fit">
+                                    {/* Reference Links */}
+                                    <Card className="border-slate-200 shadow-sm rounded-xl bg-white overflow-hidden shrink-0">
+                                        <CardHeader className="p-4 border-b border-slate-50 bg-slate-50/30 flex flex-row justify-between items-center">
+                                            <CardTitle className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                                                <LinkIcon className="w-3.5 h-3.5" /> Reference Links
+                                            </CardTitle>
+                                        </CardHeader>
+                                        <CardContent className="p-4 space-y-2 max-h-[300px] overflow-y-auto custom-scrollbar">
+                                            {(section.links || []).length === 0 ? (
+                                                <p className="text-[10px] font-bold text-slate-400 uppercase text-center py-8 border border-dashed border-slate-100 rounded-xl bg-slate-50/50">No reference links</p>
+                                            ) : (
+                                                (section.links || []).map((link, idx) => (
+                                                    <div key={idx} className="flex items-center justify-between p-3 bg-slate-50/50 border border-slate-100 rounded-xl group hover:border-slate-200 transition-all">
+                                                        <div className="flex items-center gap-3 overflow-hidden">
+                                                            <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center border border-slate-200 text-slate-400 shadow-sm">
+                                                                <LinkIcon className="w-4 h-4" />
+                                                            </div>
+                                                            <div className="overflow-hidden">
+                                                                <p className="text-[11px] font-bold text-slate-700 truncate tracking-tight">{link.title}</p>
+                                                                <p className="text-[9px] font-bold text-primary truncate hover:underline cursor-pointer" onClick={() => window.open(link.url, '_blank')}>{link.url}</p>
+                                                            </div>
+                                                        </div>
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            className="w-8 h-8 rounded-lg hover:bg-slate-200"
+                                                            onClick={() => window.open(link.url, '_blank')}
+                                                        >
+                                                            <ExternalLink className="w-3 h-3 text-slate-500" />
+                                                        </Button>
+                                                    </div>
+                                                ))
+                                            )}
+                                        </CardContent>
+                                    </Card>
+                                </div>
+
+                                {/* Right Column: Discussion */}
+                                <Card className="border-slate-200 shadow-sm rounded-xl bg-white overflow-hidden flex flex-col h-full">
                                     <CardHeader className="p-4 border-b border-slate-50 bg-slate-50/30 flex flex-row justify-between items-center">
                                         <CardTitle className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
                                             <MessageSquare className="w-3.5 h-3.5" /> Discussion
                                         </CardTitle>
                                     </CardHeader>
-                                    <CardContent className="p-0 flex flex-col">
-                                        <div className="p-4 space-y-3 max-h-[300px] overflow-y-auto min-h-[150px]">
+                                    <CardContent className="p-0 flex flex-col flex-1 min-h-0">
+                                        <div className="p-4 space-y-3 overflow-y-auto flex-1 custom-scrollbar">
                                             {(section.comments || []).length === 0 ? (
-                                                <div className="text-center py-10 flex flex-col items-center gap-2 opacity-50">
+                                                <div className="text-center py-10 flex flex-col items-center justify-center h-full gap-2 opacity-50">
                                                     <MessageSquare className="w-6 h-6 text-slate-200" />
                                                     <p className="text-[10px] font-bold text-slate-300 uppercase tracking-widest">No conversation yet</p>
                                                 </div>
@@ -333,11 +374,11 @@ export default function OnboardingProjectDetails() {
                                                 ))
                                             )}
                                         </div>
-                                        <div className="p-4 border-t border-slate-100 bg-slate-50/30 flex gap-2">
+                                        <div className="p-4 border-t border-slate-100 bg-slate-50/30 flex gap-2 shrink-0">
                                             <Input
                                                 value={commentText}
                                                 onChange={(e) => setCommentText(e.target.value)}
-                                                placeholder="Ask clarification query..."
+                                                placeholder="Ask clarifications..."
                                                 className="h-10 text-xs bg-white border-slate-200 rounded-lg focus-visible:ring-primary/20"
                                             />
                                             <Button
@@ -361,7 +402,7 @@ export default function OnboardingProjectDetails() {
                     )}
                 </div>
             </div>
-        </div>
+        </div >
     );
 }
 

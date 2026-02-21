@@ -46,6 +46,13 @@ export const ProjectProvider = ({ children }) => {
                         user_name,
                         text,
                         timestamp
+                    ),
+                    section_links (
+                        id,
+                        title,
+                        url,
+                        created_by_name,
+                        created_at
                     )
                 )
             `)
@@ -102,6 +109,13 @@ export const ProjectProvider = ({ children }) => {
                             userName: c.user_name,
                             text: c.text,
                             timestamp: c.timestamp
+                        })),
+                        links: (s.section_links || []).map(l => ({
+                            id: l.id,
+                            title: l.title,
+                            url: l.url,
+                            createdByName: l.created_by_name,
+                            createdAt: l.created_at
                         }))
                     }))
             }));
@@ -143,6 +157,10 @@ export const ProjectProvider = ({ children }) => {
             })
             .on('postgres_changes', { event: '*', schema: 'public', table: 'project_sections' }, () => {
                 console.log("[ProjectContext] Realtime: Section change detected, re-fetching...");
+                fetchProjects(true);
+            })
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'section_links' }, () => {
+                console.log("[ProjectContext] Realtime: Link change detected, re-fetching...");
                 fetchProjects(true);
             })
             .subscribe();
@@ -534,7 +552,8 @@ export const ProjectProvider = ({ children }) => {
             contributorId: data.contributor_id,
             order: data.order,
             attachments: [],
-            comments: []
+            comments: [],
+            links: []
         };
 
         const project = projects.find(p => p.id === projectId);
@@ -616,6 +635,77 @@ export const ProjectProvider = ({ children }) => {
         );
     };
 
+    // Add a link to a section
+    const addLink = async (projectId, sectionId, linkData) => {
+        const { title, url, createdBy } = linkData;
+        const { data, error } = await supabase
+            .from("section_links")
+            .insert([{
+                section_id: sectionId,
+                title,
+                url,
+                created_by_name: createdBy,
+                created_at: new Date().toISOString()
+            }])
+            .select()
+            .single();
+
+        if (error) {
+            console.error("Supabase add link error:", error);
+            return;
+        }
+
+        const project = projects.find(p => p.id === projectId);
+        if (project) {
+            const updatedSections = project.sections.map((s) => {
+                if (s.id === sectionId) {
+                    const newLink = {
+                        id: data.id,
+                        title: data.title,
+                        url: data.url,
+                        createdByName: data.created_by_name,
+                        createdAt: data.created_at
+                    };
+                    return { ...s, links: [...(s.links || []), newLink] };
+                }
+                return s;
+            });
+
+            // We don't necessarily need to sync progress for just a link, 
+            // but let's do it if it matches the pattern
+            const { completion, status: nextStatus } = await syncProjectProgress(projectId, updatedSections);
+
+            setProjects((prev) =>
+                prev.map((p) => (p.id === projectId ? { ...p, sections: updatedSections, completion, status: nextStatus } : p))
+            );
+        }
+    };
+
+    // Remove a link from a section
+    const removeLink = async (projectId, sectionId, linkId) => {
+        const { error } = await supabase.from("section_links").delete().eq("id", linkId);
+        if (error) {
+            console.error("Supabase delete link error:", error);
+            return;
+        }
+
+        const project = projects.find(p => p.id === projectId);
+        if (project) {
+            const updatedSections = project.sections.map((s) => {
+                if (s.id === sectionId) {
+                    return { ...s, links: (s.links || []).filter((l) => l.id !== linkId) };
+                }
+                return s;
+            });
+
+            const { completion, status: nextStatus } = await syncProjectProgress(projectId, updatedSections);
+
+            setProjects((prev) =>
+                prev.map((p) => (p.id === projectId ? { ...p, sections: updatedSections, completion, status: nextStatus } : p))
+            );
+        }
+    };
+
     return (
         <ProjectContext.Provider
             value={{
@@ -630,6 +720,8 @@ export const ProjectProvider = ({ children }) => {
                 removeMember,
                 addAttachment,
                 removeAttachment,
+                addLink,
+                removeLink,
                 addSection,
                 removeSection,
                 updateSection,
