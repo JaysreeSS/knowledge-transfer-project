@@ -23,7 +23,9 @@ import {
     Trash2,
     Clock,
     UserCircle,
-    ArrowRight
+    ArrowRight,
+    Link as LinkIcon,
+    ExternalLink
 } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { toast } from 'sonner';
@@ -31,7 +33,7 @@ import { toast } from 'sonner';
 export default function HandoverProjectDetails() {
     const { projectId } = useParams();
     const { user } = useAuth();
-    const { projects, updateSectionStatus, addComment, addAttachment, removeAttachment } = useProjects();
+    const { projects, updateSectionStatus, addComment, addAttachment, removeAttachment, addLink, removeLink } = useProjects();
     const navigate = useNavigate();
 
     const project = projects.find(p => p.id === projectId);
@@ -46,6 +48,8 @@ export default function HandoverProjectDetails() {
     const [content, setContent] = useState('');
     const [isEditing, setIsEditing] = useState(false);
     const [commentText, setCommentText] = useState('');
+    const [newLink, setNewLink] = useState({ title: '', url: '' });
+    const [showLinkInput, setShowLinkInput] = useState(false);
 
     useEffect(() => {
         if (section) {
@@ -99,6 +103,28 @@ export default function HandoverProjectDetails() {
                 uploadedBy: user.name,
                 url: "#" // Mock URL
             });
+        }
+    };
+
+    const handleAddLink = () => {
+        if (!newLink.title.trim() || !newLink.url.trim() || !section) {
+            toast.error('Both title and URL are required');
+            return;
+        }
+
+        // Basic URL validation
+        try {
+            const url = newLink.url.startsWith('http') ? newLink.url : `https://${newLink.url}`;
+            addLink(projectId, section.id, {
+                title: newLink.title,
+                url: url,
+                createdBy: user.name
+            });
+            setNewLink({ title: '', url: '' });
+            setShowLinkInput(false);
+            toast.success('Link added successfully');
+        } catch (e) {
+            toast.error('Invalid URL');
         }
     };
 
@@ -314,83 +340,171 @@ export default function HandoverProjectDetails() {
                                 </CardContent>
                             </Card>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pb-12">
-                                {/* Attachments */}
-                                <Card className="border-slate-200 shadow-sm rounded-xl bg-white overflow-hidden h-fit">
-                                    <CardHeader className="p-4 border-b border-slate-50 bg-slate-50/30 flex flex-row justify-between items-center">
-                                        <CardTitle className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                                            <Paperclip className="w-3.5 h-3.5" /> Attachments
-                                        </CardTitle>
-                                    </CardHeader>
-                                    <CardContent className="p-4 space-y-2">
-                                        {(section.attachments || []).length === 0 ? (
-                                            <p className="text-[10px] font-bold text-slate-400 uppercase text-center py-8 border border-dashed border-slate-100 rounded-xl bg-slate-50/50">No files attached</p>
-                                        ) : (
-                                            (section.attachments || []).map((att) => (
-                                                <div key={att.id} className="flex items-center justify-between p-3 bg-slate-50/50 border border-slate-100 rounded-xl group hover:border-slate-200 transition-all">
-                                                    <div className="flex items-center gap-3 overflow-hidden">
-                                                        <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center border border-slate-200 text-slate-400 shadow-sm">
-                                                            <FileText className="w-4 h-4" />
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pb-12 items-stretch">
+                                {/* Left Column: Attachments and Reference Links */}
+                                <div className="flex flex-col gap-4">
+                                    {/* Attachments */}
+                                    <Card className="border-slate-200 shadow-sm rounded-xl bg-white overflow-hidden shrink-0">
+                                        <CardHeader className="p-4 border-b border-slate-50 bg-slate-50/30 flex flex-row justify-between items-center">
+                                            <CardTitle className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                                                <Paperclip className="w-3.5 h-3.5" /> Attachments
+                                            </CardTitle>
+                                        </CardHeader>
+                                        <CardContent className="p-4 space-y-2 max-h-[220px] overflow-y-auto custom-scrollbar">
+                                            {(section.attachments || []).length === 0 ? (
+                                                <p className="text-[10px] font-bold text-slate-400 uppercase text-center py-8 border border-dashed border-slate-100 rounded-xl bg-slate-50/50">No files attached</p>
+                                            ) : (
+                                                (section.attachments || []).map((att) => (
+                                                    <div key={att.id} className="flex items-center justify-between p-3 bg-slate-50/50 border border-slate-100 rounded-xl group hover:border-slate-200 transition-all">
+                                                        <div className="flex items-center gap-3 overflow-hidden">
+                                                            <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center border border-slate-200 text-slate-400 shadow-sm">
+                                                                <FileText className="w-4 h-4" />
+                                                            </div>
+                                                            <div className="overflow-hidden">
+                                                                <p className="text-[11px] font-bold text-slate-700 truncate tracking-tight">{att.fileName}</p>
+                                                                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{att.fileSize}</p>
+                                                            </div>
                                                         </div>
-                                                        <div className="overflow-hidden">
-                                                            <p className="text-[11px] font-bold text-slate-700 truncate tracking-tight">{att.fileName}</p>
-                                                            <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{att.fileSize}</p>
-                                                        </div>
-                                                    </div>
-                                                    <div className="flex items-center gap-1">
-                                                        <Button variant="ghost" size="icon" className="w-8 h-8 rounded-lg hover:bg-slate-200">
-                                                            <Download className="w-3 h-3 text-slate-500" />
-                                                        </Button>
-                                                        {!isReadOnly && isContributor && (
-                                                            <Button
-                                                                variant="ghost"
-                                                                size="icon"
-                                                                className="w-8 h-8 rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-500"
-                                                                onClick={() => {
-                                                                    if (pendingRemoveAttId === att.id) {
-                                                                        removeAttachment(projectId, section.id, att.id);
-                                                                        setPendingRemoveAttId(null);
-                                                                        toast.success('Attachment removed.');
-                                                                    } else {
-                                                                        setPendingRemoveAttId(att.id);
-                                                                        toast.warning('Click again to confirm removal.', { duration: 3000 });
-                                                                        setTimeout(() => setPendingRemoveAttId(prev => prev === att.id ? null : prev), 3000);
-                                                                    }
-                                                                }}
-                                                            >
-                                                                <Trash2 className="w-3 h-3" />
+                                                        <div className="flex items-center gap-1">
+                                                            <Button variant="ghost" size="icon" className="w-8 h-8 rounded-lg hover:bg-slate-200">
+                                                                <Download className="w-3 h-3 text-slate-500" />
                                                             </Button>
-                                                        )}
+                                                            {!isReadOnly && isContributor && (
+                                                                <Button
+                                                                    variant="ghost"
+                                                                    size="icon"
+                                                                    className="w-8 h-8 rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-500"
+                                                                    onClick={() => {
+                                                                        if (pendingRemoveAttId === att.id) {
+                                                                            removeAttachment(projectId, section.id, att.id);
+                                                                            setPendingRemoveAttId(null);
+                                                                            toast.success('Attachment removed.');
+                                                                        } else {
+                                                                            setPendingRemoveAttId(att.id);
+                                                                            toast.warning('Click again to confirm removal.', { duration: 3000 });
+                                                                            setTimeout(() => setPendingRemoveAttId(prev => prev === att.id ? null : prev), 3000);
+                                                                        }
+                                                                    }}
+                                                                >
+                                                                    <Trash2 className="w-3 h-3" />
+                                                                </Button>
+                                                            )}
+                                                        </div>
                                                     </div>
+                                                ))
+                                            )}
+
+                                            {!isReadOnly && isContributor && (
+                                                <div className="pt-2 sticky bottom-0 bg-white/80 backdrop-blur-sm pb-1">
+                                                    <Label htmlFor="file-upload" className="cursor-pointer">
+                                                        <div className="w-full h-10 border border-dashed border-slate-200 rounded-xl flex items-center justify-center gap-2 hover:border-primary/50 hover:bg-slate-50 transition-all group">
+                                                            <Paperclip className="w-3.5 h-3.5 text-slate-400 group-hover:text-primary transition-colors" />
+                                                            <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 group-hover:text-primary transition-colors">Add Attachment</span>
+                                                        </div>
+                                                        <input id="file-upload" type="file" className="hidden" onChange={handleFileUpload} />
+                                                    </Label>
                                                 </div>
-                                            ))
-                                        )}
+                                            )}
+                                        </CardContent>
+                                    </Card>
 
-                                        {!isReadOnly && isContributor && (
-                                            <div className="pt-2">
-                                                <Label htmlFor="file-upload" className="cursor-pointer">
-                                                    <div className="w-full h-10 border border-dashed border-slate-200 rounded-xl flex items-center justify-center gap-2 hover:border-primary/50 hover:bg-slate-50 transition-all group">
-                                                        <Paperclip className="w-3.5 h-3.5 text-slate-400 group-hover:text-primary transition-colors" />
-                                                        <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 group-hover:text-primary transition-colors">Add Attachment</span>
+                                    {/* Reference Links */}
+                                    <Card className="border-slate-200 shadow-sm rounded-xl bg-white overflow-hidden shrink-0">
+                                        <CardHeader className="p-4 border-b border-slate-50 bg-slate-50/30 flex flex-row justify-between items-center">
+                                            <CardTitle className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                                                <LinkIcon className="w-3.5 h-3.5" /> Reference Links
+                                            </CardTitle>
+                                        </CardHeader>
+                                        <CardContent className="p-4 space-y-2 max-h-[300px] overflow-y-auto custom-scrollbar">
+                                            {(section.links || []).length === 0 ? (
+                                                <p className="text-[10px] font-bold text-slate-400 uppercase text-center py-8 border border-dashed border-slate-100 rounded-xl bg-slate-50/50">No links added</p>
+                                            ) : (
+                                                (section.links || []).map((link) => (
+                                                    <div key={link.id} className="flex items-center justify-between p-3 bg-slate-50/50 border border-slate-100 rounded-xl group hover:border-slate-200 transition-all">
+                                                        <div className="flex items-center gap-3 overflow-hidden">
+                                                            <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center border border-slate-200 text-slate-400 shadow-sm">
+                                                                <LinkIcon className="w-4 h-4" />
+                                                            </div>
+                                                            <div className="overflow-hidden">
+                                                                <p className="text-[11px] font-bold text-slate-700 truncate tracking-tight">{link.title}</p>
+                                                                <p className="text-[9px] font-bold text-primary truncate hover:underline cursor-pointer" onClick={() => window.open(link.url, '_blank')}>{link.url}</p>
+                                                            </div>
+                                                        </div>
+                                                        <div className="flex items-center gap-1">
+                                                            <Button variant="ghost" size="icon" className="w-8 h-8 rounded-lg hover:bg-slate-200" onClick={() => window.open(link.url, '_blank')}>
+                                                                <ExternalLink className="w-3 h-3 text-slate-500" />
+                                                            </Button>
+                                                            {!isReadOnly && isContributor && (
+                                                                <Button
+                                                                    variant="ghost"
+                                                                    size="icon"
+                                                                    className="w-8 h-8 rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-500"
+                                                                    onClick={() => {
+                                                                        removeLink(projectId, section.id, link.id);
+                                                                        toast.success('Link removed.');
+                                                                    }}
+                                                                >
+                                                                    <Trash2 className="w-3 h-3" />
+                                                                </Button>
+                                                            )}
+                                                        </div>
                                                     </div>
-                                                    <input id="file-upload" type="file" className="hidden" onChange={handleFileUpload} />
-                                                </Label>
-                                            </div>
-                                        )}
-                                    </CardContent>
-                                </Card>
+                                                ))
+                                            )}
 
-                                {/* Discussion */}
-                                <Card className="border-slate-200 shadow-sm rounded-xl bg-white overflow-hidden h-fit">
+                                            {!isReadOnly && isContributor && (
+                                                <div className="pt-2 space-y-2 sticky bottom-0 bg-white/80 backdrop-blur-sm">
+                                                    {showLinkInput ? (
+                                                        <div className="p-3 border border-primary/20 rounded-xl bg-primary/5 space-y-3 animate-in slide-in-from-top-2 duration-300">
+                                                            <div className="space-y-1">
+                                                                <Label className="text-[9px] font-bold uppercase tracking-widest text-slate-500">Link Title</Label>
+                                                                <Input
+                                                                    placeholder="e.g. YouTube Tutorial"
+                                                                    value={newLink.title}
+                                                                    onChange={e => setNewLink({ ...newLink, title: e.target.value })}
+                                                                    className="h-8 text-xs bg-white"
+                                                                />
+                                                            </div>
+                                                            <div className="space-y-1">
+                                                                <Label className="text-[9px] font-bold uppercase tracking-widest text-slate-500">URL</Label>
+                                                                <Input
+                                                                    placeholder="e.g. https://youtube.com/..."
+                                                                    value={newLink.url}
+                                                                    onChange={e => setNewLink({ ...newLink, url: e.target.value })}
+                                                                    className="h-8 text-xs bg-white"
+                                                                />
+                                                            </div>
+                                                            <div className="flex gap-2">
+                                                                <Button size="sm" className="h-8 text-[9px] font-bold uppercase tracking-widest flex-1" onClick={handleAddLink}>Add Link</Button>
+                                                                <Button size="sm" variant="ghost" className="h-8 text-[9px] font-bold uppercase tracking-widest flex-1" onClick={() => setShowLinkInput(false)}>Cancel</Button>
+                                                            </div>
+                                                        </div>
+                                                    ) : (
+                                                        <div
+                                                            onClick={() => setShowLinkInput(true)}
+                                                            className="w-full h-10 border border-dashed border-slate-200 rounded-xl flex items-center justify-center gap-2 hover:border-primary/50 hover:bg-slate-50 transition-all group cursor-pointer"
+                                                        >
+                                                            <LinkIcon className="w-3.5 h-3.5 text-slate-400 group-hover:text-primary transition-colors" />
+                                                            <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 group-hover:text-primary transition-colors">Add Reference Link</span>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            )}
+                                        </CardContent>
+                                    </Card>
+                                </div>
+
+                                {/* Right Column: Discussion */}
+                                <Card className="border-slate-200 shadow-sm rounded-xl bg-white overflow-hidden flex flex-col h-full">
                                     <CardHeader className="p-4 border-b border-slate-50 bg-slate-50/30 flex flex-row justify-between items-center">
                                         <CardTitle className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
                                             <MessageSquare className="w-3.5 h-3.5" /> Discussion
                                         </CardTitle>
                                     </CardHeader>
-                                    <CardContent className="p-0 flex flex-col">
-                                        <div className="p-4 space-y-3 max-h-[300px] overflow-y-auto min-h-[150px]">
+                                    <CardContent className="p-0 flex flex-col flex-1 min-h-0">
+                                        <div className="p-4 space-y-3 overflow-y-auto flex-1 custom-scrollbar">
                                             {(section.comments || []).length === 0 ? (
-                                                <div className="text-center py-10 flex flex-col items-center gap-2 opacity-50">
+                                                <div className="text-center py-10 flex flex-col items-center justify-center h-full gap-2 opacity-50">
                                                     <MessageSquare className="w-6 h-6 text-slate-200" />
                                                     <p className="text-[10px] font-bold text-slate-300 uppercase tracking-widest">No conversation yet</p>
                                                 </div>
@@ -407,11 +521,11 @@ export default function HandoverProjectDetails() {
                                             )}
                                         </div>
                                         {!isReadOnly && (
-                                            <div className="p-4 border-t border-slate-100 bg-slate-50/30 flex gap-2">
+                                            <div className="p-4 border-t border-slate-100 bg-slate-50/30 flex gap-2 shrink-0">
                                                 <Input
                                                     value={commentText}
                                                     onChange={(e) => setCommentText(e.target.value)}
-                                                    placeholder="Type localized query..."
+                                                    placeholder="Reply here..."
                                                     className="h-10 text-xs bg-white border-slate-200 rounded-lg focus-visible:ring-primary/20"
                                                 />
                                                 <Button

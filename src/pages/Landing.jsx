@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { Eye, EyeOff, Loader2, ArrowRight } from "lucide-react";
 import logo from '../assets/logo.png';
+import logoSmall from '../assets/logo-small.png';
 
 export default function Landing() {
     const { user, login } = useAuth();
@@ -66,11 +67,11 @@ export default function Landing() {
                 {/* Minimal Header */}
                 <header className="text-center mb-8 space-y-3">
                     <div className="flex justify-center mb-4">
-                        {/* <img
-                            src={logo}
+                        <img
+                            src={logoSmall}
                             alt="Logo"
-                            className="h-10 w-auto opacity-90 grayscale-[0.2]"
-                        /> */}
+                            className="h-10 w-auto opacity-90 transition-transform duration-500 hover:scale-110"
+                        />
                     </div>
                     <h1 className="text-lg font-black tracking-tight text-slate-800 uppercase">
                         Knowledge Transfer Portal

@@ -154,6 +154,10 @@ serve(async (req: Request) => {
                 })
             }
 
+            const now = new Date()
+            const deadlineDate = project.deadline ? new Date(project.deadline) : null
+            const isDeadlinePassed = deadlineDate && deadlineDate < now
+
             const userData = notifications.get(username)
 
             // Avoid duplicate sign-off reminders for the same project
@@ -162,9 +166,11 @@ serve(async (req: Request) => {
                 userData.items.push({
                     project: project.name,
                     deadline: project.deadline,
-                    section: 'All sections reviewed & understood',
+                    section: isDeadlinePassed ? 'Project Completion (Deadline Passed)' : 'All sections reviewed & understood',
                     role: 'Manager',
-                    reason: 'All sections have been marked as Understood — please sign off the project'
+                    reason: isDeadlinePassed 
+                        ? 'The project deadline has passed — please sign off the completed project'
+                        : 'All sections have been marked as Understood — please sign off the project'
                 })
             }
         }
@@ -205,7 +211,7 @@ serve(async (req: Request) => {
                     'Authorization': `Bearer ${RESEND_API_KEY}`,
                 },
                 body: JSON.stringify({
-                    from: 'KT System <notifications@yourverifieddomain.com>',
+                    from: 'KT System <onboarding@resend.dev>',
                     to: [targetEmail],
                     subject: 'Action Required: Knowledge Transfer Update',
                     html: `
