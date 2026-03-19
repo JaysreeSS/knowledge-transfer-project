@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from "../contexts/AuthContext.jsx";
 import { Button } from "@/components/ui/button";
@@ -8,6 +8,66 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Eye, EyeOff, Loader2, ArrowRight } from "lucide-react";
 import logo from '../assets/logo.png';
 import logoSmall from '../assets/logo-small.png';
+
+/* ── Twinkling and drifting galaxy background ── */
+function StarryBackground() {
+    const stars = useMemo(() =>
+        Array.from({ length: 150 }, (_, i) => ({
+            id: i,
+            x: Math.random() * 110 - 5, // Slightly wider than 100% to cover drift
+            y: Math.random() * 110 - 5,
+            size: 0.4 + Math.random() * 1.4,
+            duration: 4 + Math.random() * 6,
+            driftDuration: 100 + Math.random() * 150,
+            delay: Math.random() * -10,
+            opacity: 0.2 + Math.random() * 0.8,
+        }))
+        , []);
+
+    return (
+        <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
+            {/* Brightened space gradient following app theme */}
+            <div className="absolute inset-0 bg-gradient-to-br from-[#1a0a2e] via-[#2d1450] to-[#1a0a2e]" />
+
+            {/* Galactic glow spots (Nebulae) - Higher visibility */}
+            <div className="absolute top-[10%] left-[20%] w-[800px] h-[800px] rounded-full bg-purple-500/10 blur-[140px] animate-pulse [animation-duration:5s]" />
+            <div className="absolute bottom-[20%] right-[10%] w-[600px] h-[600px] rounded-full bg-indigo-400/10 blur-[120px] animate-pulse [animation-duration:10s]" />
+            <div className="absolute top-[50%] left-[50%] -translate-x-1/2 -translate-y-1/2 w-[1000px] h-[400px] rounded-full bg-blue-400/5 blur-[150px] rotate-45" />
+
+            {/* Drifting Galaxy Stars */}
+            <svg className="absolute inset-0 w-full h-full">
+                {stars.map((star) => (
+                    <circle
+                        key={star.id}
+                        cx={`${star.x}%`}
+                        cy={`${star.y}%`}
+                        r={star.size}
+                        fill="white"
+                        className="opacity-0"
+                        style={{
+                            animation: `
+                                twinkle ${star.duration}s ease-in-out ${star.delay}s infinite,
+                                drift ${star.driftDuration}s linear ${star.delay}s infinite
+                            `,
+                            filter: star.size > 1.2 ? 'blur(0.5px)' : 'none'
+                        }}
+                    />
+                ))}
+            </svg>
+
+            <style>{`
+                @keyframes twinkle {
+                    0%, 100% { opacity: ${0.1}; }
+                    50% { opacity: ${0.7}; }
+                }
+                @keyframes drift {
+                    0% { transform: translate(0, 0); }
+                    100% { transform: translate(-30px, -30px); }
+                }
+            `}</style>
+        </div>
+    );
+}
 
 export default function Landing() {
     const { user, login } = useAuth();
@@ -27,7 +87,6 @@ export default function Landing() {
             } else if (user.role === 'Manager') {
                 navigate('/manager');
             } else {
-                // Default to ICR Dashboard for other roles
                 navigate('/icr/dashboard');
             }
         }
@@ -39,65 +98,71 @@ export default function Landing() {
         setIsLoading(true);
 
         try {
-            // Initiate login - state updates via AuthContext will trigger navigation
             const response = await login(username, password);
 
-            // Only handle errors here. Success case is handled by useEffect.
             if (!response.success) {
                 setError(response.error || "Invalid credentials.");
                 setIsLoading(false);
             }
-            // If success, keep loading state valid until navigation happens (component unmounts)
         } catch (err) {
             setIsLoading(false);
             setError("An error occurred during login.");
         }
     };
 
-
     return (
-        <div className="min-h-screen w-full bg-[#f8f9fc] flex flex-col items-center justify-center relative overflow-hidden font-sans">
+        <div className="min-h-screen w-full flex flex-col items-center justify-center relative overflow-hidden font-sans antialiased text-base">
 
-            {/* Subtle Background Blobs */}
-            <div className="absolute top-[-20%] left-[-10%] w-[600px] h-[600px] bg-indigo-50/50 rounded-full blur-[100px] pointer-events-none" />
-            <div className="absolute bottom-[-20%] right-[-10%] w-[500px] h-[500px] bg-blue-50/50 rounded-full blur-[100px] pointer-events-none" />
+            {/* Animated Starry Background */}
+            <StarryBackground />
 
             <div className="z-10 w-full max-w-sm px-4 flex flex-col items-center animate-in fade-in zoom-in-95 duration-700">
 
-                {/* Minimal Header */}
-                <header className="text-center mb-8 space-y-3">
-                    <div className="flex justify-center mb-4">
+                {/* Logo & Title */}
+                <header className="flex items-center justify-center gap-3 mb-10">
+                    <div className="transition-transform duration-500 hover:scale-105">
                         <img
                             src={logoSmall}
                             alt="Logo"
-                            className="h-10 w-auto opacity-90 transition-transform duration-500 hover:scale-110"
+                            className="h-8 w-auto brightness-0 invert opacity-90"
                         />
                     </div>
-                    <h1 className="text-lg font-black tracking-tight text-slate-800 uppercase">
-                        Knowledge Transfer Portal
+                    <h1 className="text-2xl font-bold tracking-tight text-white">
+                        {(() => {
+                            const portalName = localStorage.getItem('s_portal_name') || 'Knowledge Transfer';
+                            const words = portalName.split(' ');
+                            if (words.length > 1) {
+                                return (
+                                    <>
+                                        {words[0]}<span className="bg-clip-text text-transparent bg-gradient-to-r from-purple-400 via-indigo-400 to-purple-400 animate-gradient-x">{words.slice(1).join(' ')}</span>
+                                    </>
+                                );
+                            }
+                            return portalName;
+                        })()}
                     </h1>
                 </header>
 
-                {/* Login Card */}
-                <Card className="w-full border-none shadow-xl shadow-slate-200/50 bg-white/80 backdrop-blur-sm rounded-2xl overflow-hidden ring-1 ring-slate-100">
+                {/* Login Card — frosted glass */}
+                <Card className="w-full border-none shadow-2xl shadow-purple-900/30 bg-white/[0.07] backdrop-blur-xl rounded-2xl overflow-hidden ring-1 ring-white/[0.12]">
                     <CardContent className="p-8 pt-8">
                         <form onSubmit={handleLogin} className="space-y-5">
                             <div className="space-y-2">
-                                <Label htmlFor="username" className="text-xs font-black text-slate-500 uppercase tracking-widest ml-1">
+                                <Label htmlFor="username" className="text-xs font-medium text-purple-200/70 uppercase tracking-label ml-1">
                                     System ID
                                 </Label>
                                 <Input
                                     id="username"
-                                    placeholder="Enter your username"
+                                    placeholder="name@ideassion.com"
                                     value={username}
                                     onChange={(e) => setUsername(e.target.value)}
-                                    className="h-10 rounded-lg bg-slate-50 border-slate-200 focus:bg-white focus:ring-2 focus:ring-primary/20 transition-all font-bold text-slate-900 text-sm"
+                                    className="h-10 rounded-lg bg-white/[0.08] border-white/[0.1] text-white placeholder:text-white/30 focus:bg-white/[0.12] focus:ring-2 focus:ring-purple-400/30 focus:border-purple-400/30 transition-all font-medium text-base"
                                     required
                                 />
                             </div>
 
                             <div className="space-y-2">
-                                <Label htmlFor="password" className="text-xs font-black text-slate-500 uppercase tracking-widest ml-1">
+                                <Label htmlFor="password" className="text-xs font-medium text-purple-200/70 uppercase tracking-label ml-1">
                                     Password
                                 </Label>
                                 <div className="relative">
@@ -107,12 +172,12 @@ export default function Landing() {
                                         placeholder="••••••••"
                                         value={password}
                                         onChange={(e) => setPassword(e.target.value)}
-                                        className="h-10 rounded-lg bg-slate-50 border-slate-200 focus:bg-white focus:ring-2 focus:ring-primary/20 transition-all pr-10 text-slate-900 font-bold text-sm"
+                                        className="h-10 rounded-lg bg-white/[0.08] border-white/[0.1] text-white placeholder:text-white/30 focus:bg-white/[0.12] focus:ring-2 focus:ring-purple-400/30 focus:border-purple-400/30 transition-all pr-10 font-medium text-base"
                                     />
                                     <button
                                         type="button"
                                         onClick={() => setShowPassword(!showPassword)}
-                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white/70 transition-colors"
                                     >
                                         {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                                     </button>
@@ -120,7 +185,7 @@ export default function Landing() {
                             </div>
 
                             {error && (
-                                <div className="p-3 rounded-lg bg-red-50 text-red-600 text-xs font-semibold text-center animate-in fade-in">
+                                <div className="p-3 rounded-lg bg-red-500/15 border border-red-400/20 text-red-300 text-xs font-medium text-center animate-in fade-in">
                                     {error}
                                 </div>
                             )}
@@ -128,30 +193,19 @@ export default function Landing() {
                             <Button
                                 type="submit"
                                 disabled={isLoading}
-                                className="w-full h-11 bg-primary hover:bg-primary/90 text-white rounded-lg font-bold uppercase tracking-widest text-[10px] shadow-md hover:shadow-lg transition-all"
+                                className="w-full h-11 bg-purple-600 hover:bg-purple-500 text-white rounded-lg font-semibold tracking-button text-sm shadow-lg shadow-purple-700/30 hover:shadow-purple-500/40 transition-all"
                             >
                                 {isLoading ? (
                                     <Loader2 className="w-4 h-4 animate-spin" />
                                 ) : (
                                     <span className="flex items-center gap-2">
-                                        Sign In <ArrowRight className="w-4 h-4" />
+                                        Sign in <ArrowRight className="w-4 h-4" />
                                     </span>
                                 )}
                             </Button>
                         </form>
                     </CardContent>
                 </Card>
-
-                {/* Footer - Contained within layout */}
-                <footer className="mt-8 text-center space-y-2">
-                    <p className="text-xs text-slate-400 font-bold uppercase tracking-tight">
-                        © {new Date().getFullYear()} Ideassion KT Portal
-                    </p>
-                    <div className="flex justify-center gap-4 text-[10px] text-slate-300 font-bold uppercase tracking-widest">
-                        <span className="hover:text-primary transition-colors cursor-pointer">Privacy</span>
-                        <span className="hover:text-primary transition-colors cursor-pointer">Help</span>
-                    </div>
-                </footer>
 
             </div>
         </div>

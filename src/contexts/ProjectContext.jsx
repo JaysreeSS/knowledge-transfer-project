@@ -54,6 +54,15 @@ export const ProjectProvider = ({ children }) => {
                         created_by_name,
                         created_at
                     )
+                ),
+                lifecycle_mode,
+                transition_count,
+                receiver_section_progress (
+                    id,
+                    section_id,
+                    receiver_id,
+                    status,
+                    updated_at
                 )
             `)
             .order('created_at', { ascending: false });
@@ -78,6 +87,8 @@ export const ProjectProvider = ({ children }) => {
                 managerId: p.manager_id,
                 managerName: p.manager_name,
                 createdAt: p.created_at,
+                lifecycleMode: p.lifecycle_mode || 'ACTIVE',
+                transitionCount: p.transition_count || 0,
                 members: (p.project_members || []).map(m => ({
                     id: m.id,
                     userId: m.user_id,
@@ -117,7 +128,14 @@ export const ProjectProvider = ({ children }) => {
                             createdByName: l.created_by_name,
                             createdAt: l.created_at
                         }))
-                    }))
+                    })),
+                receiverProgress: (p.receiver_section_progress || []).map(rp => ({
+                    id: rp.id,
+                    sectionId: rp.section_id,
+                    receiverId: rp.receiver_id,
+                    status: rp.status,
+                    updatedAt: rp.updated_at
+                }))
             }));
             setProjects(formattedProjects);
             sessionStorage.setItem("kt_projects", JSON.stringify(formattedProjects));
@@ -163,6 +181,10 @@ export const ProjectProvider = ({ children }) => {
                 console.log("[ProjectContext] Realtime: Link change detected, re-fetching...");
                 fetchProjects(true);
             })
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'receiver_section_progress' }, () => {
+                console.log("[ProjectContext] Realtime: Receiver progress change detected, re-fetching...");
+                fetchProjects(true);
+            })
             .subscribe();
 
         return () => {
@@ -173,7 +195,7 @@ export const ProjectProvider = ({ children }) => {
 
     // Create a new project and sync to Supabase
     const createProject = async (projectData) => {
-        const { name, description, managerId, managerName, members, sections, deadline } = projectData;
+        const { name, description, managerId, managerName, members, sections, deadline, category } = projectData;
 
         // 1. Insert Project
         const { data: project, error: projectError } = await supabase
@@ -185,7 +207,9 @@ export const ProjectProvider = ({ children }) => {
                 manager_name: managerName,
                 status: 'Not Started',
                 completion: 0,
-                deadline: deadline || null
+                deadline: deadline || null,
+                category: category || 'General',
+                lifecycle_mode: projectData.lifecycleMode || (members.some(m => m.ktRole === 'Receiver') ? 'TRANSITION' : 'ACTIVE')
             }])
             .select()
             .single();
@@ -226,31 +250,89 @@ export const ProjectProvider = ({ children }) => {
 
         // Re-fetch projects to update state with full project data (including joined names)
         await fetchProjects();
+
+        // If there are receivers, auto-init their progress records
+        if (project && members.some(m => m.ktRole === 'Receiver')) {
+            const receivers = members.filter(m => m.ktRole === 'Receiver');
+            const { data: insertedSections } = await supabase
+                .from('project_sections')
+                .select('id')
+                .eq('project_id', project.id);
+
+            if (insertedSections && insertedSections.length > 0) {
+                const progressRecords = [];
+                for (const receiver of receivers) {
+                    for (const sec of insertedSections) {
+                        progressRecords.push({
+                            project_id: project.id,
+                            section_id: sec.id,
+                            receiver_id: receiver.userId,
+                            status: 'Not Started'
+                        });
+                    }
+                }
+                if (progressRecords.length > 0) {
+                    const { error: rpError } = await supabase
+                        .from('receiver_section_progress')
+                        .upsert(progressRecords, { onConflict: 'section_id,receiver_id' });
+                    if (rpError) console.error("Error initializing receiver progress:", rpError);
+                }
+                await fetchProjects();
+            }
+        }
+
         return project;
     };
 
     // Helper to calculate and sync project progress (completion & status)
-    const syncProjectProgress = async (projectId, sections) => {
+    const syncProjectProgress = async (projectId, sections, receiverProgress = null) => {
         const project = projects.find(p => p.id === projectId);
         if (!project || !sections || sections.length === 0) return { completion: 0, status: project?.status || 'Not Started' };
 
         const total = sections.length;
+        const isTransitionMode = project.lifecycleMode === 'TRANSITION' || project.lifecycleMode === 'REVERSE_KT';
+        const rpData = receiverProgress || project.receiverProgress || [];
 
-        // Granular completion calculation:
-        // - Understood: 100% of section weight (1.0)
-        // - Ready for Review: 50% of section weight (0.5)
-        // - Needs Clarification: 50% of section weight (0.5) 
-        // - Others: 0%
-        let weightedSum = 0;
-        sections.forEach(s => {
-            if (s.status === 'Understood') {
-                weightedSum += 1.0;
-            } else if (s.status === 'Ready for Review' || s.status === 'Needs Clarification') {
-                weightedSum += 0.5;
+        let completion;
+
+        if (isTransitionMode && rpData.length > 0) {
+            // Multi-receiver aware: calculate average completion across all receivers
+            const receivers = project.members.filter(m => m.ktRole === 'Receiver');
+            if (receivers.length > 0) {
+                let totalReceiverCompletion = 0;
+                for (const receiver of receivers) {
+                    let receiverWeightedSum = 0;
+                    sections.forEach(s => {
+                        const rp = rpData.find(r => r.sectionId === s.id && r.receiverId === receiver.userId);
+                        const rpStatus = rp?.status || 'Not Started';
+                        if (rpStatus === 'Understood') {
+                            receiverWeightedSum += 1.0;
+                        } else if (rpStatus === 'Ready for Review' || rpStatus === 'Presented') {
+                            receiverWeightedSum += 0.5;
+                        } else if (rpStatus === 'Needs Clarification') {
+                            receiverWeightedSum += 0.25;
+                        }
+                    });
+                    totalReceiverCompletion += Math.round((receiverWeightedSum / total) * 100);
+                };
+                completion = Math.round(totalReceiverCompletion / receivers.length);
+            } else {
+                completion = 0;
             }
-        });
-
-        const completion = Math.round((weightedSum / total) * 100);
+        } else {
+            // Active mode: use section status directly
+            let weightedSum = 0;
+            sections.forEach(s => {
+                if (s.status === 'Understood' || (!isTransitionMode && s.status === 'Active')) {
+                    weightedSum += 1.0;
+                } else if (s.status === 'Ready for Review' || s.status === 'Presented') {
+                    weightedSum += 0.5;
+                } else if (s.status === 'Needs Clarification') {
+                    weightedSum += 0.25;
+                }
+            });
+            completion = Math.round((weightedSum / total) * 100);
+        }
 
         // Transition status if work has started
         let nextStatus = project.status || 'Not Started';
@@ -258,7 +340,7 @@ export const ProjectProvider = ({ children }) => {
             s.status !== 'Draft' ||
             (s.content && s.content.trim().length > 0) ||
             (s.attachments && s.attachments.length > 0)
-        );
+        ) || rpData.some(rp => rp.status !== 'Not Started');
 
         if ((nextStatus === 'Not Started' || nextStatus === 'Active') && hasWorkStarted) {
             nextStatus = 'In Progress';
@@ -393,6 +475,215 @@ export const ProjectProvider = ({ children }) => {
                 return p;
             })
         );
+    };
+
+    // Transition a project from TRANSITION mode back to ACTIVE (converts ALL receivers)
+    const finalizeTransition = async (projectId) => {
+        const project = projects.find(p => p.id === projectId);
+        if (!project) return;
+
+        console.log(`[ProjectContext] Finalizing full transition for project: ${project.name}`);
+
+        // 1. Update project mode and reset status for active phase
+        const { error: projectError } = await supabase
+            .from("projects")
+            .update({
+                lifecycle_mode: 'ACTIVE',
+                status: 'In Progress',
+                transition_count: (project.transitionCount || 0) + 1
+            })
+            .eq("id", projectId);
+
+        if (projectError) {
+            console.error("Error updating project mode:", projectError);
+            return;
+        }
+
+        // 2. Convert ALL Receivers to Contributors
+        const { error: membersError } = await supabase
+            .from("project_members")
+            .update({ kt_role: 'Contributor' })
+            .eq("project_id", projectId)
+            .eq("kt_role", 'Receiver');
+
+        if (membersError) {
+            console.error("Error updating member roles:", membersError);
+        }
+
+        // 3. Reset section statuses to 'Active'
+        const { error: sectionsError } = await supabase
+            .from("project_sections")
+            .update({ status: 'Active' })
+            .eq("project_id", projectId);
+
+        if (sectionsError) {
+            console.error("Error resetting section statuses:", sectionsError);
+        }
+
+        await fetchProjects();
+    };
+
+    // Toggle Reverse KT mode
+    const setReverseKTMode = async (projectId, isEnabled) => {
+        const newMode = isEnabled ? 'REVERSE_KT' : 'TRANSITION';
+        const { error } = await supabase
+            .from("projects")
+            .update({ lifecycle_mode: newMode })
+            .eq("id", projectId);
+
+        if (error) {
+            console.error("Error setting Reverse KT mode:", error);
+            return;
+        }
+
+        await fetchProjects();
+    };
+
+    // Update a specific receiver's progress on a specific section
+    const updateReceiverProgress = async (projectId, sectionId, receiverId, newStatus) => {
+        // Upsert the receiver's progress record
+        const { error } = await supabase
+            .from('receiver_section_progress')
+            .upsert({
+                project_id: projectId,
+                section_id: sectionId,
+                receiver_id: receiverId,
+                status: newStatus,
+                updated_at: new Date().toISOString()
+            }, { onConflict: 'section_id,receiver_id' });
+
+        if (error) {
+            console.error("Error updating receiver progress:", error);
+            return;
+        }
+
+        // Update local state optimistically
+        const project = projects.find(p => p.id === projectId);
+        if (!project) return;
+
+        const updatedProgress = [...(project.receiverProgress || [])];
+        const existingIdx = updatedProgress.findIndex(rp => rp.sectionId === sectionId && rp.receiverId === receiverId);
+        if (existingIdx >= 0) {
+            updatedProgress[existingIdx] = { ...updatedProgress[existingIdx], status: newStatus };
+        } else {
+            updatedProgress.push({ sectionId, receiverId, status: newStatus });
+        }
+
+        // Sync project progress with updated receiver data
+        const { completion, status: nextStatus } = await syncProjectProgress(projectId, project.sections, updatedProgress);
+
+        setProjects(prev =>
+            prev.map(p => p.id === projectId
+                ? { ...p, receiverProgress: updatedProgress, completion, status: nextStatus }
+                : p
+            )
+        );
+    };
+
+    // Get a specific receiver's completion percentage
+    const getReceiverCompletion = (projectId, receiverId) => {
+        const project = projects.find(p => p.id === projectId);
+        if (!project || !project.sections || project.sections.length === 0) return 0;
+
+        const rpData = project.receiverProgress || [];
+        const total = project.sections.length;
+        let weightedSum = 0;
+
+        project.sections.forEach(s => {
+            const rp = rpData.find(r => r.sectionId === s.id && r.receiverId === receiverId);
+            const rpStatus = rp?.status || 'Not Started';
+            if (rpStatus === 'Understood') {
+                weightedSum += 1.0;
+            } else if (rpStatus === 'Ready for Review' || rpStatus === 'Presented') {
+                weightedSum += 0.5;
+            } else if (rpStatus === 'Needs Clarification') {
+                weightedSum += 0.25;
+            }
+        });
+
+        return Math.round((weightedSum / total) * 100);
+    };
+
+    // Initialize receiver progress records (e.g., when adding a new receiver to a project)
+    const initReceiverProgress = async (projectId, receiverId) => {
+        const project = projects.find(p => p.id === projectId);
+        if (!project) return;
+
+        const progressRecords = project.sections.map(s => ({
+            project_id: projectId,
+            section_id: s.id,
+            receiver_id: receiverId,
+            status: 'Not Started'
+        }));
+
+        if (progressRecords.length > 0) {
+            const { error } = await supabase
+                .from('receiver_section_progress')
+                .upsert(progressRecords, { onConflict: 'section_id,receiver_id' });
+            if (error) console.error("Error initializing receiver progress:", error);
+        }
+
+        await fetchProjects();
+    };
+
+    // Finalize transition for a SPECIFIC receiver (per-receiver graduation)
+    const finalizeReceiverTransition = async (projectId, receiverId) => {
+        const project = projects.find(p => p.id === projectId);
+        if (!project) return;
+
+        console.log(`[ProjectContext] Finalizing transition for receiver: ${receiverId} on project: ${project.name}`);
+
+        // 1. Convert this specific receiver to Contributor
+        const { error: membersError } = await supabase
+            .from('project_members')
+            .update({ kt_role: 'Contributor' })
+            .eq('project_id', projectId)
+            .eq('user_id', receiverId)
+            .eq('kt_role', 'Receiver');
+
+        if (membersError) {
+            console.error("Error updating member role:", membersError);
+            return;
+        }
+
+        // 2. Check if there are any remaining receivers
+        const { data: remainingReceivers, error: checkError } = await supabase
+            .from('project_members')
+            .select('id')
+            .eq('project_id', projectId)
+            .eq('kt_role', 'Receiver');
+
+        if (checkError) {
+            console.error("Error checking remaining receivers:", checkError);
+        }
+
+        // 3. If no more receivers, switch project back to ACTIVE
+        if (!remainingReceivers || remainingReceivers.length === 0) {
+            const { error: projectError } = await supabase
+                .from('projects')
+                .update({
+                    lifecycle_mode: 'ACTIVE',
+                    status: 'In Progress',
+                    transition_count: (project.transitionCount || 0) + 1
+                })
+                .eq('id', projectId);
+
+            if (projectError) {
+                console.error("Error updating project mode:", projectError);
+            }
+
+            // Reset section statuses to Active
+            const { error: sectionsError } = await supabase
+                .from('project_sections')
+                .update({ status: 'Active' })
+                .eq('project_id', projectId);
+
+            if (sectionsError) {
+                console.error("Error resetting section statuses:", sectionsError);
+            }
+        }
+
+        await fetchProjects();
     };
 
     // Delete a project
@@ -726,6 +1017,12 @@ export const ProjectProvider = ({ children }) => {
                 removeSection,
                 updateSection,
                 updateProject,
+                finalizeTransition,
+                finalizeReceiverTransition,
+                setReverseKTMode,
+                updateReceiverProgress,
+                getReceiverCompletion,
+                initReceiverProgress,
                 loading
             }}
         >

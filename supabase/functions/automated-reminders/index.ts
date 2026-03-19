@@ -15,8 +15,26 @@ serve(async (req: Request) => {
         return new Response('ok', { headers: corsHeaders })
     }
 
+    const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!)
+    const now = new Date()
+    now.setHours(0, 0, 0, 0)
+
     try {
-        const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!)
+        // 0. Check global settings
+        const { data: settings, error: settingsError } = await supabase
+            .from('system_settings')
+            .select('enable_email_alerts')
+            .eq('id', 1)
+            .maybeSingle()
+
+        if (settingsError) throw settingsError
+        
+        if (settings && !settings.enable_email_alerts) {
+            return new Response(JSON.stringify({ success: true, message: 'Email alerts are disabled globally.' }), {
+                headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+                status: 200,
+            })
+        }
 
         // 1. Fetch all data needed
         const { data: sections, error: sectionsError } = await supabase
@@ -26,6 +44,7 @@ serve(async (req: Request) => {
                 title,
                 status,
                 contributor_id,
+                created_at,
                 projects (
                     id,
                     name,
@@ -52,8 +71,38 @@ serve(async (req: Request) => {
 
         if (membersError) throw membersError
 
+        // Helper to check if today is a reminder day
+        const isReminderDay = (createdAt: string, deadlineStr: string | null) => {
+            const created = new Date(createdAt)
+            if (isNaN(created.getTime())) return { shouldSend: false, isDeadlineDay: false }
+            
+            created.setHours(0, 0, 0, 0)
+            const day3 = new Date(created)
+            day3.setDate(day3.getDate() + 3)
+
+            const deadline = (deadlineStr && deadlineStr.trim() !== "") ? new Date(deadlineStr) : null
+            if (deadline && isNaN(deadline.getTime())) {
+                // If deadline exists but is invalid, we treat it as no deadline for logic purposes 
+                // but safety first: stop reminders if the date is corrupted.
+                return { shouldSend: false, isDeadlineDay: false }
+            }
+
+            if (deadline) deadline.setHours(0, 0, 0, 0)
+
+            // No emails after deadline day
+            if (deadline && now > deadline) return { shouldSend: false, isDeadlineDay: false }
+
+            const isDeadlineDay = deadline && now.getTime() === deadline.getTime()
+            const isDayBefore = deadline && now.getTime() === (deadline.getTime() - 86400000)
+            const isThirdDay = now.getTime() === day3.getTime()
+
+            return {
+                shouldSend: isThirdDay || isDayBefore || isDeadlineDay,
+                isDeadlineDay
+            }
+        }
+
         // 2. Process notifications
-        // We group by username as requested
         const notifications = new Map() // username -> { name: string, email: string, items: any[] }
 
         const getAndRegisterUser = (userId: string) => {
@@ -75,6 +124,11 @@ serve(async (req: Request) => {
             const project = Array.isArray(section.projects) ? section.projects[0] : section.projects
             if (!project) return
 
+            const { shouldSend, isDeadlineDay } = isReminderDay(section.created_at, project.deadline)
+            if (!shouldSend) return
+
+            const extensionMsg = isDeadlineDay ? " - If you wanted still more time, ask your manager/team lead for the extension of the deadline." : ""
+
             // A. Notify Contributor (if status is Draft or Needs Clarification)
             if (['Draft', 'Needs Clarification'].includes(section.status)) {
                 const userData = getAndRegisterUser(section.contributor_id)
@@ -84,7 +138,7 @@ serve(async (req: Request) => {
                         deadline: project.deadline,
                         section: section.title,
                         role: 'Contributor',
-                        reason: section.status === 'Draft' ? 'Section is still in Draft' : 'Receiver requested clarification'
+                        reason: (section.status === 'Draft' ? 'Section is still in Draft' : 'Receiver requested clarification') + extensionMsg
                     })
                 }
             }
@@ -96,7 +150,6 @@ serve(async (req: Request) => {
                 projectReceivers.forEach(r => {
                     const userData = getAndRegisterUser(r.user_id)
                     if (userData) {
-                        // Avoid adding the same section twice for the same user
                         const alreadyAdded = userData.items.find((i: any) => i.section === section.title && i.project === project.name)
                         if (!alreadyAdded) {
                             userData.items.push({
@@ -104,7 +157,7 @@ serve(async (req: Request) => {
                                 deadline: project.deadline,
                                 section: section.title,
                                 role: 'Receiver',
-                                reason: 'Content is ready for your review'
+                                reason: 'Content is ready for your review' + extensionMsg
                             })
                         }
                     }
@@ -113,7 +166,6 @@ serve(async (req: Request) => {
         })
 
         // C. Notify Manager to sign off if ALL sections in a project are 'Understood'
-        // Fetch active projects (not yet completed or signed off)
         const { data: activeProjects, error: activeProjectsError } = await supabase
             .from('projects')
             .select('id, name, deadline, status, manager_id')
@@ -124,6 +176,11 @@ serve(async (req: Request) => {
         for (const project of (activeProjects ?? [])) {
             if (!project.manager_id) continue
 
+            // No emails after deadline day for managers too as per "no emails should come after the deadline day"
+            const deadlineDate = project.deadline ? new Date(project.deadline) : null
+            if (deadlineDate) deadlineDate.setHours(0,0,0,0)
+            if (deadlineDate && now > deadlineDate) continue
+
             // Check all sections for this project
             const { data: projectSections, error: psError } = await supabase
                 .from('project_sections')
@@ -132,11 +189,9 @@ serve(async (req: Request) => {
 
             if (psError || !projectSections || projectSections.length === 0) continue
 
-            // Skip if any section is not yet 'Understood'
             const allUnderstood = projectSections.every(s => s.status === 'Understood')
             if (!allUnderstood) continue
 
-            // Fetch the manager's user record
             const { data: managerUser, error: managerError } = await supabase
                 .from('users')
                 .select('id, name, email, username')
@@ -154,23 +209,17 @@ serve(async (req: Request) => {
                 })
             }
 
-            const now = new Date()
-            const deadlineDate = project.deadline ? new Date(project.deadline) : null
-            const isDeadlinePassed = deadlineDate && deadlineDate < now
-
+            const isDeadlineDay = deadlineDate && now.getTime() === deadlineDate.getTime()
             const userData = notifications.get(username)
 
-            // Avoid duplicate sign-off reminders for the same project
             const alreadyAdded = userData.items.find((i: any) => i.project === project.name && i.role === 'Manager')
             if (!alreadyAdded) {
                 userData.items.push({
                     project: project.name,
                     deadline: project.deadline,
-                    section: isDeadlinePassed ? 'Project Completion (Deadline Passed)' : 'All sections reviewed & understood',
+                    section: 'Project Completion ready for Sign Off',
                     role: 'Manager',
-                    reason: isDeadlinePassed 
-                        ? 'The project deadline has passed — please sign off the completed project'
-                        : 'All sections have been marked as Understood — please sign off the project'
+                    reason: 'All sections have been marked as Understood — please sign off the project' + (isDeadlineDay ? " (Today is the deadline)" : "")
                 })
             }
         }
@@ -178,7 +227,6 @@ serve(async (req: Request) => {
         // 3. Send emails via Resend
         const results = []
         for (const [username, data] of notifications.entries()) {
-            // Only send if there are items to notify about
             if (data.items.length === 0) continue
 
             const targetEmail = data.email

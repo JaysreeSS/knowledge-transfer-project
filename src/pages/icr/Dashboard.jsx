@@ -90,23 +90,23 @@ export default function ICRDashboard() {
     ];
 
     return (
-        <div className="px-4 sm:px-8 md:px-12 py-6 space-y-5 max-w-7xl mx-auto animate-in fade-in duration-700">
+        <div className="px-4 sm:px-8 md:px-12 py-6 space-y-5 max-w-7xl mx-auto animate-in fade-in duration-700 transition-colors">
             <header className="space-y-1">
-                <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Dashboard</h1>
-                <p className="text-slate-500 text-sm font-medium leading-relaxed max-w-lg">Overview of your knowledge transfer responsibilities and learning paths.</p>
+                <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100 tracking-tight transition-colors">Dashboard</h1>
+                <p className="text-slate-500 dark:text-slate-400 text-sm font-medium leading-relaxed max-w-lg transition-colors">Overview of your knowledge transfer responsibilities and learning paths.</p>
             </header>
 
             {/* Stats */}
             <div className="grid gap-6 md:grid-cols-3">
                 {stats.map((stat, index) => (
-                    <Card key={index} className="border-slate-200 shadow-sm hover:shadow-md transition-all duration-300 bg-white group overflow-hidden relative">
-                        <div className={`absolute -right-4 -top-4 w-20 h-20 rounded-full ${stat.bg} opacity-50 group-hover:scale-150 transition-transform duration-500 ease-out`} />
+                    <Card key={index} className="border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-md transition-all duration-300 bg-white dark:bg-slate-800/50 group overflow-hidden relative">
+                        <div className={`absolute -right-4 -top-4 w-20 h-20 rounded-full ${stat.bg} dark:bg-slate-700/20 opacity-50 group-hover:scale-150 transition-transform duration-500 ease-out`} />
                         <CardContent className="p-6 relative z-10 flex items-center justify-between">
                             <div>
-                                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2">{stat.title}</p>
-                                <p className="text-3xl font-bold text-slate-900 tracking-tight">{stat.value}</p>
+                                <p className="text-xs font-medium uppercase tracking-label text-slate-400 dark:text-slate-500 mb-2 transition-colors">{stat.title}</p>
+                                <p className="text-3xl font-semibold text-slate-900 dark:text-slate-100 tracking-tight transition-colors">{stat.value}</p>
                             </div>
-                            <div className={`p-3 rounded-lg ${stat.bg} ${stat.color} shadow-sm border border-slate-100`}>
+                            <div className={`p-3 rounded-lg ${stat.bg} dark:bg-slate-900 ${stat.color} dark:text-slate-300 shadow-sm border border-slate-100 dark:border-slate-800 transition-colors`}>
                                 <stat.icon className="h-5 w-5" />
                             </div>
                         </CardContent>
@@ -114,60 +114,17 @@ export default function ICRDashboard() {
                 ))}
             </div>
 
-            {/* Attention Needed Sections Area */}
-            <div className="space-y-4">
-                <h2 className="text-sm font-bold text-slate-800 uppercase tracking-widest flex items-center gap-2">
-                    <Shield className="w-4 h-4 text-orange-500" />
-                    Attention Needed
-                </h2>
-                {attentionNeeded.length > 0 ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {attentionNeeded.map((section, idx) => {
-                            const isClarify = section.type === 'clarify';
-                            const targetPath = isClarify ? `/icr/handovers/${section.projectId}` : `/icr/onboardings/${section.projectId}`;
-
-                            return (
-                                <Card
-                                    key={`${section.projectId}-${section.id}-${idx}`}
-                                    onClick={() => navigate(targetPath)}
-                                    className={`group cursor-pointer border shadow-sm transition-all rounded-xl overflow-hidden ${isClarify ? 'border-orange-100 bg-orange-50/20 hover:bg-orange-50/50' : 'border-blue-100 bg-blue-50/20 hover:bg-blue-50/50'
-                                        }`}
-                                >
-                                    <CardContent className="p-4 flex items-center gap-4">
-                                        <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${isClarify ? 'bg-orange-100/50 text-orange-600' : 'bg-blue-100/50 text-blue-600'
-                                            }`}>
-                                            {isClarify ? <Inbox className="w-5 h-5" /> : <FileCheck className="w-5 h-5" />}
-                                        </div>
-                                        <div className="min-w-0 flex-1">
-                                            <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest truncate">{section.projectName}</h4>
-                                            <p className="text-sm font-bold text-slate-800 truncate mt-0.5">{section.title}</p>
-                                            <p className={`text-[10px] font-bold uppercase tracking-tight mt-1 ${isClarify ? 'text-orange-600' : 'text-blue-600'
-                                                }`}>
-                                                {isClarify ? 'Clarification Needed' : 'Review Required'}
-                                            </p>
-                                        </div>
-                                        <ArrowUpRight className="w-4 h-4 ml-auto text-slate-300 group-hover:text-slate-500 transition-colors" />
-                                    </CardContent>
-                                </Card>
-                            );
-                        })}
-                    </div>
-                ) : (
-                    <div className="text-center py-12 text-slate-400 text-[10px] font-bold uppercase tracking-widest bg-white border border-dashed border-slate-200 rounded-xl">
-                        No pending actions required at this time
-                    </div>
-                )}
-            </div>
+            {/* Dashboard Stats and Projects */}
 
             {/* Projects Grid */}
             <div className="space-y-4">
-                <h2 className="text-sm font-bold text-slate-800 uppercase tracking-widest flex items-center gap-2">
-                    <Layers className="w-4 h-4 text-slate-400" />
-                    Your Projects
+                <h2 className="text-xs font-semibold text-slate-800 dark:text-slate-200 uppercase tracking-label flex items-center gap-2 transition-colors">
+                    <Layers className="w-4 h-4 text-slate-400 dark:text-slate-500 transition-colors" />
+                    Your projects
                 </h2>
 
                 {myProjects.length === 0 ? (
-                    <div className="text-center py-20 text-slate-400 text-xs font-bold uppercase tracking-widest bg-slate-50/50 rounded-xl border border-dashed border-slate-200">
+                    <div className="text-center py-20 text-slate-400 dark:text-slate-600 text-xs font-medium uppercase tracking-label bg-slate-50/50 dark:bg-slate-900/20 rounded-xl border border-dashed border-slate-200 dark:border-slate-800 transition-colors">
                         No active projects found.
                     </div>
                 ) : (
@@ -181,47 +138,47 @@ export default function ICRDashboard() {
                                 <Card
                                     key={project.id}
                                     onClick={() => handleProjectClick(project)}
-                                    className="group cursor-pointer hover:shadow-md transition-all duration-300 border border-slate-200 rounded-xl overflow-hidden bg-white"
+                                    className="group cursor-pointer hover:shadow-md transition-all duration-300 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden bg-white dark:bg-slate-800/50"
                                 >
                                     <div className={`h-1.5 w-full ${isHandover ? 'bg-blue-500' : 'bg-orange-500'}`} />
                                     <CardContent className="p-6 space-y-4">
                                         <div className="flex justify-between items-start">
-                                            <div className={`px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-widest border ${roleColor}`}>
+                                            <div className={`px-2 py-0.5 rounded text-xs font-medium uppercase tracking-label border ${isHandover ? 'text-blue-600 bg-blue-50 border-blue-100 dark:text-blue-400 dark:bg-blue-900/20 dark:border-blue-800' : 'text-orange-600 bg-orange-50 border-orange-100 dark:text-orange-400 dark:bg-orange-900/20 dark:border-orange-800'} transition-colors`}>
                                                 {role}
                                             </div>
-                                            <div className="w-8 h-8 rounded-lg flex items-center justify-center border border-slate-100 text-slate-300 group-hover:border-primary/20 group-hover:text-primary group-hover:bg-primary/5 transition-all">
+                                            <div className="w-8 h-8 rounded-lg flex items-center justify-center border border-slate-100 dark:border-slate-800 text-slate-300 dark:text-slate-600 group-hover:border-primary/20 group-hover:text-primary dark:group-hover:text-primary group-hover:bg-primary/5 dark:group-hover:bg-primary/10 transition-all">
                                                 <ArrowUpRight className="w-4 h-4" />
                                             </div>
                                         </div>
 
                                         <div>
-                                            <h3 className="text-base font-bold text-slate-900 group-hover:text-primary transition-colors line-clamp-1">{project.name}</h3>
-                                            <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed mt-2">{project.description}</p>
+                                            <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100 group-hover:text-primary transition-colors line-clamp-1">{project.name}</h3>
+                                            <p className="text-sm text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed mt-2">{project.description}</p>
                                         </div>
 
-                                        <div className="space-y-2 pt-4 border-t border-slate-50">
-                                            <div className="flex justify-between text-[10px] font-bold uppercase tracking-widest text-slate-400">
+                                        <div className="space-y-2 pt-4 border-t border-slate-50 dark:border-slate-800 transition-colors">
+                                            <div className="flex justify-between text-xs font-medium uppercase tracking-label text-slate-400 dark:text-slate-500 transition-colors">
                                                 <span>Completion</span>
-                                                <span className="text-slate-900">{project.completion}%</span>
+                                                <span className="text-slate-900 dark:text-slate-100 transition-colors">{project.completion}%</span>
                                             </div>
-                                            <Progress value={project.completion} className="h-1.5 bg-slate-100" />
+                                            <Progress value={project.completion} className="h-1.5 bg-slate-100 dark:bg-slate-900 transition-colors" />
                                         </div>
 
                                         <div className="flex items-center gap-2 pt-2">
                                             <div className="flex -space-x-2">
                                                 {project.members && project.members.slice(0, 3).map((m, i) => (
-                                                    <div key={i} className="w-6 h-6 rounded-full bg-white border border-slate-200 flex items-center justify-center text-[9px] font-bold text-slate-600 shadow-sm">
+                                                    <div key={i} className="w-6 h-6 rounded-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-[10px] font-medium text-slate-600 dark:text-slate-400 shadow-sm transition-colors">
                                                         {m.name.charAt(0)}
                                                     </div>
                                                 ))}
                                                 {project.members && project.members.length > 3 && (
-                                                    <div className="w-6 h-6 rounded-full bg-slate-50 border border-slate-200 flex items-center justify-center text-[9px] font-bold text-slate-400 shadow-sm">
+                                                    <div className="w-6 h-6 rounded-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-[9px] font-bold text-slate-400 dark:text-slate-500 shadow-sm transition-colors">
                                                         +{project.members.length - 3}
                                                     </div>
                                                 )}
                                             </div>
-                                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-auto">
-                                                {project.sections?.length || 0} Sections
+                                            <span className="text-xs font-medium text-slate-400 dark:text-slate-500 uppercase tracking-label ml-auto transition-colors">
+                                                {project.sections?.length || 0} sections
                                             </span>
                                         </div>
                                     </CardContent>

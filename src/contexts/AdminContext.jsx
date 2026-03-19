@@ -6,6 +6,7 @@ const AdminContext = createContext(undefined);
 export const AdminProvider = ({ children }) => {
     const [users, setUsers] = useState([]);
     const [templates, setTemplates] = useState([]);
+    const [settings, setSettings] = useState(null);
     const [loading, setLoading] = useState(true);
 
     // Initial load and Realtime Subscriptions
@@ -53,9 +54,26 @@ export const AdminProvider = ({ children }) => {
             })
             .subscribe();
 
+        // Realtime subscription for system_settings table
+        const settingsSubscription = supabase
+            .channel('public:system_settings')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'system_settings' }, (payload) => {
+                console.log("[AdminContext] Settings change detected:", payload);
+                if (payload.event === 'UPDATE' || payload.event === 'INSERT') {
+                    setSettings(payload.new);
+                    // Sync to localStorage for immediate UI use in layouts
+                    localStorage.setItem('s_portal_name', payload.new.portal_name);
+                    localStorage.setItem('p_categories', JSON.stringify(payload.new.categories));
+                    localStorage.setItem('p_default_period', payload.new.default_project_period.toString());
+                    localStorage.setItem('n_email_alerts', payload.new.enable_email_alerts.toString());
+                }
+            })
+            .subscribe();
+
         return () => {
             supabase.removeChannel(usersSubscription);
             supabase.removeChannel(templatesSubscription);
+            supabase.removeChannel(settingsSubscription);
         };
     }, []);
 
@@ -83,6 +101,22 @@ export const AdminProvider = ({ children }) => {
                     input_type: t.input_type || ['text', 'file']
                 }));
                 setTemplates(normalizedTemplates);
+            }
+
+            // Fetch Settings
+            const { data: settingsData, error: settingsError } = await supabase
+                .from('system_settings')
+                .select('*')
+                .eq('id', 1)
+                .maybeSingle();
+
+            if (!settingsError && settingsData) {
+                setSettings(settingsData);
+                // Sync to localStorage
+                localStorage.setItem('s_portal_name', settingsData.portal_name);
+                localStorage.setItem('p_categories', JSON.stringify(settingsData.categories));
+                localStorage.setItem('p_default_period', settingsData.default_project_period.toString());
+                localStorage.setItem('n_email_alerts', settingsData.enable_email_alerts.toString());
             }
         } catch (error) {
             console.error("Error in fetchData:", error);
@@ -227,11 +261,27 @@ export const AdminProvider = ({ children }) => {
         }
     };
 
+    const updateSettings = async (updates) => {
+        try {
+            const { error } = await supabase
+                .from('system_settings')
+                .update(updates)
+                .eq('id', 1);
+
+            if (error) throw error;
+            return { success: true };
+        } catch (error) {
+            console.error("Error updating settings:", error);
+            return { success: false, error: error.message };
+        }
+    };
+
     return (
         <AdminContext.Provider
             value={{
                 users, addUser, updateUser, deleteUser,
                 templates, addTemplate, updateTemplate, deleteTemplate,
+                settings, updateSettings,
                 loading
             }}
         >

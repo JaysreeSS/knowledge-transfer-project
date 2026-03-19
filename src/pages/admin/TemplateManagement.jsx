@@ -75,38 +75,38 @@ export default function TemplateManagement({ isEmbedded = false }) {
         <div className={`px-8 md:px-12 py-6 max-w-7xl mx-auto space-y-8 animate-in fade-in duration-500 ${isEmbedded ? 'px-0 py-0' : ''}`}>
 
             {!isEmbedded && (
-                <header className="space-y-1">
-                    <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Section Templates</h1>
-                    <p className="text-slate-500 text-sm font-medium">Define and manage standardized sections for knowledge transfer projects.</p>
+                <header className="space-y-1 transition-colors">
+                    <h1 className="text-2xl font-semibold tracking-page-title text-slate-900 dark:text-slate-100 transition-colors">Section templates</h1>
+                    <p className="text-slate-500 dark:text-slate-400 text-sm font-medium transition-colors">Define and manage standardized sections for knowledge transfer projects.</p>
                 </header>
             )}
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                 {/* Creation panel */}
                 <div className="md:col-span-1">
-                    <Card className="shadow-sm border border-slate-200 rounded-xl sticky top-8">
-                        <CardHeader className="p-5 border-b border-slate-100 bg-slate-50/30">
-                            <CardTitle className="text-sm font-bold text-slate-900">{editingId ? 'Edit Section Template' : 'New Section Template'}</CardTitle>
-                            <CardDescription className="text-[11px] font-medium text-slate-400 mt-1">{editingId ? 'Modify existing template details.' : 'Define a new required section.'}</CardDescription>
+                    <Card className="shadow-sm border border-slate-200 dark:border-slate-800 rounded-xl bg-white dark:bg-slate-800/50 sticky top-8 transition-colors">
+                        <CardHeader className="p-5 border-b border-slate-100 dark:border-slate-800 bg-slate-50/30 dark:bg-slate-900/20">
+                            <CardTitle className="text-lg font-semibold tracking-section-title text-slate-900 dark:text-slate-100">{editingId ? 'Edit section template' : 'New section template'}</CardTitle>
+                            <CardDescription className="text-[11px] font-medium text-slate-400 dark:text-slate-500 mt-1">{editingId ? 'Modify existing template details.' : 'Define a new required section.'}</CardDescription>
                         </CardHeader>
                         <CardContent className="p-5 space-y-4">
                             <div className="space-y-1.5">
-                                <label className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Section Title</label>
+                                <label className="text-xs font-medium uppercase tracking-label text-slate-500 dark:text-slate-400">Section title</label>
                                 <Input
                                     placeholder="e.g. Compliance Checks"
                                     value={newTitle}
                                     onChange={e => setNewTitle(e.target.value)}
-                                    className="border-slate-200 rounded-lg h-10 text-sm focus-visible:ring-primary/10"
+                                    className="border-slate-200 dark:border-slate-800 rounded-lg h-10 text-sm focus-visible:ring-primary/10 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 transition-colors"
                                 />
                             </div>
 
                             <div className="space-y-1.5">
-                                <label className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Instructions / Info</label>
+                                <label className="text-xs font-medium uppercase tracking-label text-slate-500 dark:text-slate-400">Instructions / info</label>
                                 <Textarea
                                     placeholder="Describe what information is needed..."
                                     value={newDescription}
                                     onChange={e => setNewDescription(e.target.value)}
-                                    className="border-slate-200 rounded-lg min-h-[120px] resize-none text-sm focus-visible:ring-primary/10"
+                                    className="border-slate-200 dark:border-slate-800 rounded-lg min-h-[120px] resize-none text-sm focus-visible:ring-primary/10 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 transition-colors font-medium leading-relaxed"
                                 />
                             </div>
 
@@ -117,7 +117,7 @@ export default function TemplateManagement({ isEmbedded = false }) {
                                     className="w-full bg-primary hover:bg-primary/90 text-white rounded-lg font-medium h-9 text-sm shadow-sm"
                                 >
                                     {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Plus className="w-4 h-4 mr-2" />}
-                                    {saving ? (editingId ? 'Updating...' : 'Adding...') : (editingId ? 'Save Section Template' : 'Add Section Template')}
+                                    {saving ? (editingId ? 'Updating...' : 'Adding...') : (editingId ? 'Save section template' : 'Add section template')}
                                 </Button>
                                 {editingId && (
                                     <Button
@@ -127,7 +127,7 @@ export default function TemplateManagement({ isEmbedded = false }) {
                                             setNewDescription('');
                                         }}
                                         variant="ghost"
-                                        className="w-full mt-2 h-9 text-slate-500 font-medium"
+                                        className="w-full mt-2 h-9 text-slate-500 dark:text-slate-400 font-medium hover:text-slate-900 dark:hover:text-slate-100 transition-colors"
                                     >
                                         Cancel
                                     </Button>
@@ -139,33 +139,33 @@ export default function TemplateManagement({ isEmbedded = false }) {
 
                 {/* List panel */}
                 <div className="md:col-span-2 space-y-6">
-                    <div className="flex items-center justify-between px-1">
-                        <h3 className="text-[11px] font-bold uppercase text-slate-400 tracking-widest">Ordered Layout Sections</h3>
-                        <Badge variant="soft" className="bg-slate-100 text-slate-500">{templates.length} Templates</Badge>
+                    <div className="flex items-center justify-between px-1 transition-colors">
+                        <h3 className="text-xs font-medium uppercase tracking-label text-slate-500 dark:text-slate-400 transition-colors">Ordered layout sections</h3>
+                        <Badge variant="soft" className="bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 transition-colors">{templates.length} Templates</Badge>
                     </div>
 
                     {templates.length === 0 && (
-                        <div className="text-center py-20 text-slate-400 bg-slate-50/50 rounded-xl border border-dashed border-slate-200">
-                            <Layout className="w-10 h-10 mx-auto mb-3 opacity-20" />
-                            <p className="text-sm font-medium">No templates created yet.</p>
+                        <div className="text-center py-20 text-slate-400 dark:text-slate-600 bg-slate-50/50 dark:bg-slate-900/20 rounded-xl border border-dashed border-slate-200 dark:border-slate-800 transition-colors">
+                            <Layout className="w-10 h-10 mx-auto mb-3 opacity-20 transition-colors" />
+                            <p className="text-sm font-medium transition-colors">No templates created yet.</p>
                         </div>
                     )}
 
                     <div className="grid gap-3">
                         {[...templates].sort((a, b) => (a.order || 0) - (b.order || 0)).map((t, idx, sortedArray) => (
-                            <Card key={t.id} className="group hover:border-primary/20 transition-all border border-slate-200 shadow-sm rounded-xl bg-white">
+                            <Card key={t.id} className="group hover:border-primary/20 transition-all border border-slate-200 dark:border-slate-800 shadow-sm rounded-xl bg-white dark:bg-slate-800/50">
                                 <CardContent className="p-4 flex items-start justify-between">
                                     <div className="flex items-start gap-4">
-                                        <div className="w-9 h-9 rounded-lg bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-primary/5 group-hover:text-primary transition-colors shrink-0 border border-slate-100">
+                                        <div className="w-9 h-9 rounded-lg bg-slate-50 dark:bg-slate-900 flex items-center justify-center text-slate-400 dark:text-slate-600 group-hover:bg-primary/5 dark:group-hover:bg-primary/10 group-hover:text-primary transition-colors shrink-0 border border-slate-100 dark:border-slate-800 transition-colors">
                                             <Layout className="w-4 h-4" />
                                         </div>
-                                        <div className="space-y-1">
-                                            <h4 className="text-sm font-semibold text-slate-900">{t.title}</h4>
+                                        <div className="space-y-1 transition-colors">
+                                            <h4 className="text-sm font-semibold text-slate-900 dark:text-slate-100 transition-colors">{t.title}</h4>
                                             {t.description && (
-                                                <p className="text-[11px] text-slate-500 leading-relaxed font-medium max-w-md line-clamp-2">{t.description}</p>
+                                                <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed font-medium max-w-md line-clamp-2 transition-colors">{t.description}</p>
                                             )}
-                                            <div className="flex items-center gap-2 mt-2">
-                                                <span className="text-[9px] font-bold uppercase tracking-widest text-slate-400 bg-slate-50 px-1.5 py-0.5 rounded border border-slate-100">Sequence {t.order || idx + 1}</span>
+                                            <div className="flex items-center gap-2 mt-2 transition-colors">
+                                                <span className="text-xs font-medium uppercase tracking-label text-slate-500 dark:text-slate-500 bg-slate-50 dark:bg-slate-900 px-1.5 py-0.5 rounded border border-slate-100 dark:border-slate-800 transition-colors">Sequence {t.order || idx + 1}</span>
                                             </div>
                                         </div>
                                     </div>
@@ -173,7 +173,7 @@ export default function TemplateManagement({ isEmbedded = false }) {
                                         <Button
                                             variant="ghost"
                                             size="icon"
-                                            className="h-8 w-8 rounded-md hover:bg-slate-100 text-slate-400 disabled:opacity-20"
+                                            className="h-8 w-8 rounded-md hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 dark:text-slate-600 disabled:opacity-20"
                                             onClick={() => moveTemplateUp(t, idx)}
                                             disabled={idx === 0}
                                         >
@@ -182,19 +182,19 @@ export default function TemplateManagement({ isEmbedded = false }) {
                                         <Button
                                             variant="ghost"
                                             size="icon"
-                                            className="h-8 w-8 rounded-md hover:bg-slate-100 text-slate-400 disabled:opacity-20"
+                                            className="h-8 w-8 rounded-md hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 dark:text-slate-600 disabled:opacity-20"
                                             onClick={() => moveTemplateDown(t, idx)}
                                             disabled={idx === sortedArray.length - 1}
                                         >
                                             <ChevronDown className="w-4 h-4" />
                                         </Button>
-                                        <Button variant="ghost" size="icon" className="h-8 w-8 rounded-md hover:bg-slate-100 text-slate-400" onClick={() => startEdit(t)}>
+                                        <Button variant="ghost" size="icon" className="h-8 w-8 rounded-md hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 dark:text-slate-600" onClick={() => startEdit(t)}>
                                             <Pencil className="w-3.5 h-3.5" />
                                         </Button>
                                         <Button variant="ghost" size="icon"
                                             className={`h-8 w-8 rounded-md text-slate-400 transition-colors ${pendingDeleteTemplateId === t.id
-                                                    ? 'bg-red-100 text-red-600 hover:bg-red-200'
-                                                    : 'hover:bg-red-50 hover:text-red-600'
+                                                ? 'bg-red-100 text-red-600 hover:bg-red-200'
+                                                : 'hover:bg-red-50 hover:text-red-600'
                                                 }`}
                                             onClick={() => {
                                                 if (pendingDeleteTemplateId === t.id) {
