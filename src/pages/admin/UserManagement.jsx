@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { UserPlus, UserCog, ShieldCheck, User, FolderKanban, Trash2, Eye, EyeOff, AlertTriangle, X } from 'lucide-react';
+import { UserPlus, UserCog, ShieldCheck, User, FolderKanban, Trash2, Eye, EyeOff, AlertTriangle, X, Search } from 'lucide-react';
 import { toast } from 'sonner';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { getAvatarUrl } from '@/lib/utils';
@@ -50,7 +50,7 @@ function DeleteConfirmDialog({ user, activeProjects = [], onConfirm, onCancel, i
                 </div>
 
                 {/* User info pill */}
-                <div className="mx-6 mt-5 p-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 rounded-xl flex items-center gap-3">
+                <div className="mx-6 mt-5 p-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 rounded-xl flex items-center gap-4">
                     <div className="w-9 h-9 rounded-lg bg-red-100 dark:bg-red-900/30 flex items-center justify-center text-red-500 shrink-0">
                         <User className="w-4 h-4" />
                     </div>
@@ -63,27 +63,27 @@ function DeleteConfirmDialog({ user, activeProjects = [], onConfirm, onCancel, i
                 {/* ── Active project warning ── */}
                 {hasActiveProjects && (
                     <div className="mx-6 mt-4 rounded-xl border border-amber-200 dark:border-amber-900/40 bg-amber-50 dark:bg-amber-900/20 overflow-hidden animate-in fade-in duration-200 transition-colors">
-                        <div className="flex items-center gap-2 px-3 py-2.5 border-b border-amber-200/60 dark:border-amber-800/60 bg-amber-100/50 dark:bg-amber-900/40 transition-colors">
+                        <div className="flex items-center gap-2 px-4 py-2 border-b border-amber-200/60 dark:border-amber-800/60 bg-amber-100/50 dark:bg-amber-900/40 transition-colors">
                             <AlertTriangle className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 shrink-0" />
                             <p className="text-xs font-medium text-amber-800 dark:text-amber-200 uppercase tracking-label">
                                 Active in {activeProjects.length} project{activeProjects.length > 1 ? 's' : ''}
                             </p>
                         </div>
-                        <div className="px-3 py-2 space-y-1.5 max-h-36 overflow-y-auto custom-scrollbar">
+                        <div className="px-4 py-2 space-y-1.5 max-h-36 overflow-y-auto custom-scrollbar">
                             {activeProjects.map(p => (
                                 <div key={p.id} className="flex items-center justify-between gap-2">
                                     <div className="flex items-center gap-1.5 min-w-0">
                                         <AlertTriangle className="w-3 h-3 text-amber-500/70 dark:text-amber-500/50 shrink-0" />
                                         <span className="text-xs font-semibold text-amber-900 dark:text-amber-300 truncate">{p.name}</span>
                                     </div>
-                                    <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-amber-200 dark:bg-amber-800 text-amber-800 dark:text-amber-200 shrink-0 transition-colors">
+                                    <span className="text-[9px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded bg-amber-200 dark:bg-amber-800 text-amber-800 dark:text-amber-200 shrink-0 transition-colors">
                                         {p.status}
                                     </span>
                                 </div>
                             ))}
                         </div>
-                        <div className="px-3 py-2 border-t border-amber-200/60 dark:border-amber-800/60 transition-colors">
-                            <p className="text-[10px] text-amber-700 dark:text-amber-400 leading-relaxed">
+                        <div className="px-4 py-2 border-t border-amber-200/60 dark:border-amber-800/60 transition-colors">
+                            <p className="text-xs text-amber-700 dark:text-amber-400 leading-relaxed">
                                 They will be <strong>removed from all projects</strong> and their assigned sections will become unassigned. You can reassign those sections afterwards.
                             </p>
                         </div>
@@ -91,7 +91,7 @@ function DeleteConfirmDialog({ user, activeProjects = [], onConfirm, onCancel, i
                 )}
 
                 {/* Actions */}
-                <div className="p-6 flex gap-3">
+                <div className="p-6 flex gap-4">
                     <Button
                         variant="ghost"
                         onClick={onCancel}
@@ -127,7 +127,8 @@ function DeleteConfirmDialog({ user, activeProjects = [], onConfirm, onCancel, i
 // ─── Main Component ──────────────────────────────────────────────────────────
 export default function UserManagement({ isEmbedded = false }) {
     const navigate = useNavigate();
-    const { users, addUser, updateUser, deleteUser, isMockData } = useAdmin();
+    const { users, addUser, updateUser, deleteUser, isMockData, settings } = useAdmin();
+    const themeColor = settings?.theme_color?.replace('#', '') || localStorage.getItem('a_theme_color')?.replace('#', '') || '7c3aed';
     const { projects } = useProjects();
 
     const [isAdding, setIsAdding] = useState(false);
@@ -139,14 +140,92 @@ export default function UserManagement({ isEmbedded = false }) {
     const [deleteTarget, setDeleteTarget] = useState(null);       // full user object
     const [deleteActiveProjects, setDeleteActiveProjects] = useState([]); // active projects the target belongs to
     const [isDeleting, setIsDeleting] = useState(false);
+    const [searchTerm, setSearchTerm] = useState('');
+ 
+    const renderUserCard = (u) => {
+        const isNonAdmin = !u.isAdmin && u.role !== 'System Admin';
+        const userProjectsCount = isNonAdmin ? projects.filter(p =>
+            p.managerId === u.id || p.members.some(m => m.userId === u.id)
+        ).length : 0;
+ 
+        return (
+            <div key={u.id} className="space-y-2">
+                <Card
+                    className="group transition-all duration-200 border border-slate-200 dark:border-slate-800 shadow-sm rounded-xl overflow-hidden bg-white dark:bg-slate-800/50 cursor-pointer hover:border-primary/20 dark:hover:border-primary/40 hover:shadow-md"
+                    onClick={() => isNonAdmin && navigate(`/admin/users/${u.id}/projects`)}
+                >
+                    <div className="p-4 flex flex-col sm:flex-row sm:items-center gap-4">
+                        <div className="flex items-center gap-4 flex-1 min-w-0">
+                            <Avatar className="w-10 h-10 rounded-lg border border-slate-100 dark:border-slate-800 shadow-sm transition-transform group-hover:scale-110">
+                                <AvatarImage src={getAvatarUrl(u.avatar_url || u.name, themeColor)} alt={u.name} />
+                                <AvatarFallback className="bg-primary/5 dark:bg-primary/20 text-primary dark:text-primary font-semibold text-xs uppercase transition-colors">
+                                    {u.name?.substring(0, 2) || 'US'}
+                                </AvatarFallback>
+                            </Avatar>
+     
+                            <div className="flex-1 min-w-0 text-left">
+                                <div className="flex items-center flex-wrap gap-2 transition-colors">
+                                    <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100 leading-none transition-colors">{u.name}</h3>
+                                    <Badge variant="soft" className="!normal-case text-[11px] font-semibold tracking-tight bg-slate-50 dark:bg-slate-900 text-slate-400 dark:text-slate-500 border border-slate-100 dark:border-slate-800 transition-colors italic">
+                                        {u.role || 'Contributor'}
+                                    </Badge>
+                                    {isNonAdmin && userProjectsCount > 0 && (
+                                        <Badge variant="blue" className="text-xs font-medium uppercase tracking-label transition-colors">
+                                            {userProjectsCount} projects
+                                        </Badge>
+                                    )}
+                                </div>
+                                <div className="flex items-center gap-4 mt-1.5 overflow-hidden">
+                                    <p className="text-xs text-muted-foreground dark:text-slate-400 font-medium transition-colors truncate">{u.username}</p>
+                                    <span className="text-slate-200 dark:text-slate-800 hidden xs:inline">•</span>
+                                    <p className="text-xs text-muted-foreground dark:text-slate-500 font-mono transition-colors hidden xs:block">{u.id.substring(0, 8)}</p>
+                                </div>
+                            </div>
+                        </div>
+ 
+                        <div className="flex items-center gap-2 shrink-0 transition-colors sm:ml-auto">
+                            {isNonAdmin && (
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-8 gap-2 text-xs font-semibold text-slate-400 dark:text-slate-500 hover:text-primary dark:hover:text-primary hover:bg-primary/5 dark:hover:bg-primary/15 rounded-lg px-2 sm:px-4 transition-all"
+                                    onClick={(e) => { e.stopPropagation(); navigate(`/admin/users/${u.id}/projects`); }}
+                                >
+                                    <FolderKanban className="w-3.5 h-3.5" />
+                                    <span className="hidden sm:inline">View Projects</span>
+                                </Button>
+                            )}
+                            <div className="w-[1px] h-4 bg-slate-100 dark:bg-slate-800 mx-1 transition-colors hidden sm:block" />
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-8 w-8 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+                                onClick={(e) => { e.stopPropagation(); startEdit(u); }}
+                            >
+                                <UserCog className="w-3.5 h-3.5" />
+                            </Button>
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-8 w-8 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/30 text-slate-300 dark:text-slate-600 hover:text-red-500 dark:hover:text-red-400 transition-colors"
+                                onClick={(e) => openDeleteDialog(e, u)}
+                            >
+                                <Trash2 className="w-3.5 h-3.5" />
+                            </Button>
+                        </div>
+                    </div>
+                </Card>
+            </div>
+        );
+    };
 
-    const PREDEFINED_ROLES = ['Developer', 'QA Engineer', 'Business Analyst', 'Support', 'Manager', 'System Admin'];
+    const PREDEFINED_ROLES = ['Developer', 'QA Engineer', 'Business Analyst', 'Support'];
+    const CORE_ROLES = ['Manager', 'System Admin'];
     const [isOtherRole, setIsOtherRole] = useState(false);
     const [customRole, setCustomRole] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [formData, setFormData] = useState({
         username: '',    // login identifier (used to log in to the app)
-        email: '',       // email address for reminders/notifications only
         password: '',
         name: '',
         role: '',
@@ -174,6 +253,16 @@ export default function UserManagement({ isEmbedded = false }) {
             toast.error('Please fill in all required fields (Username, Full Name, and Role).');
             return;
         }
+
+        // Check for duplicate username (case-insensitive)
+        const isDuplicate = users.some(u => 
+            u.id !== editingId && 
+            u.username?.toLowerCase() === formData.username.toLowerCase()
+        );
+        if (isDuplicate) {
+            toast.error(`The username "${formData.username}" is already taken. Please choose a different one.`);
+            return;
+        }
         if (!editingId && !formData.password) {
             toast.error('Please enter a password for the new user.');
             return;
@@ -184,7 +273,6 @@ export default function UserManagement({ isEmbedded = false }) {
         }
 
         const submissionData = {
-            email: formData.email,
             username: formData.username,
             password: formData.password,
             name: formData.name,
@@ -213,7 +301,7 @@ export default function UserManagement({ isEmbedded = false }) {
     const resetForm = () => {
         setIsAdding(false);
         setEditingId(null);
-        setFormData({ username: '', email: '', password: '', name: '', role: '', isAdmin: false });
+        setFormData({ username: '', password: '', name: '', role: '', isAdmin: false });
         setIsOtherRole(false);
         setCustomRole('');
         setShowPassword(false);
@@ -223,11 +311,10 @@ export default function UserManagement({ isEmbedded = false }) {
         setEditingId(user.id);
         const isStandard = PREDEFINED_ROLES.includes(user.role);
         setFormData({
-            email: user.email || '',
             username: user.username || '',
             password: '',
             name: user.name,
-            role: isStandard ? user.role : 'other',
+            role: isStandard || CORE_ROLES.includes(user.role) ? user.role : 'other',
             isAdmin: user.isAdmin
         });
         setIsAdding(true);
@@ -268,11 +355,30 @@ export default function UserManagement({ isEmbedded = false }) {
         setDeleteTarget(user);
     };
 
-    const sortedUsers = [...users].sort((a, b) => a.name.localeCompare(b.name));
+    const sortedUsers = [...users].filter(u => 
+        u.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+        u.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (u.role || '').toLowerCase().includes(searchTerm.toLowerCase())
+    ).sort((a, b) => a.name.localeCompare(b.name));
+    const admins = sortedUsers.filter(u => u.isAdmin || u.role === 'System Admin');
+    const managers = sortedUsers.filter(u => !u.isAdmin && u.role === 'Manager');
+    const functionalUsers = sortedUsers.filter(u => !u.isAdmin && u.role !== 'System Admin' && u.role !== 'Manager');
+
+    const groupedFunctional = functionalUsers.reduce((acc, u) => {
+        const role = u.role || 'Contributor';
+        if (!acc[role]) acc[role] = [];
+        acc[role].push(u);
+        return acc;
+    }, {});
+
     const categories = [
-        { title: 'System Administrators', items: sortedUsers.filter(u => u.isAdmin || u.role === 'System Admin') },
-        { title: 'Managers', items: sortedUsers.filter(u => !u.isAdmin && u.role === 'Manager') },
-        { title: 'Functional Roles', items: sortedUsers.filter(u => !u.isAdmin && u.role !== 'System Admin' && u.role !== 'Manager') },
+        { title: 'System Administrators', items: admins },
+        { title: 'Managers', items: managers },
+        {
+            title: 'Functional Roles',
+            items: functionalUsers,
+            groups: groupedFunctional
+        },
     ];
 
     return (
@@ -294,20 +400,31 @@ export default function UserManagement({ isEmbedded = false }) {
                         </p>
                     </header>
                     {!isAdding && (
-                        <Button
-                            onClick={() => setIsAdding(true)}
-                            className="bg-primary hover:bg-primary/90 text-white shadow-sm rounded-lg px-5 font-medium h-9 text-sm shrink-0 flex items-center gap-2"
-                        >
-                            <UserPlus className="w-4 h-4" />
-                            Add user
-                        </Button>
+                        <div className="flex items-center gap-3">
+                            <div className="relative group min-w-[300px]">
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-primary transition-colors" />
+                                <Input
+                                    placeholder="Search users by name, role or username..."
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                    className="w-full pl-10 pr-4 h-10 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg shadow-sm focus:ring-primary/20 focus:border-primary outline-none text-sm transition-all font-medium dark:text-slate-200"
+                                />
+                            </div>
+                            <Button
+                                onClick={() => setIsAdding(true)}
+                                className="bg-primary hover:bg-primary/90 text-white shadow-sm rounded-lg px-5 font-medium h-10 text-sm shrink-0 flex items-center gap-2"
+                            >
+                                <UserPlus className="w-4 h-4" />
+                                Add user
+                            </Button>
+                        </div>
                     )}
                 </div>
             )}
 
             {isMockData && (
                 <div className="bg-amber-50/50 dark:bg-amber-900/10 border border-amber-200/60 dark:border-amber-800/40 rounded-xl p-4 flex flex-col md:flex-row items-center justify-between gap-4">
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-4">
                         <div className="w-10 h-10 rounded-lg bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center text-amber-600 dark:text-amber-400 shrink-0">
                             <ShieldCheck className="w-5 h-5" />
                         </div>
@@ -389,7 +506,7 @@ export default function UserManagement({ isEmbedded = false }) {
                                         Role <span className="text-red-400">*</span>
                                     </label>
                                     <select
-                                        className="flex h-10 w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:ring-offset-0 disabled:cursor-not-allowed disabled:opacity-50 transition-all font-medium text-slate-700 dark:text-slate-200"
+                                        className="flex h-10 w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-4 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:ring-offset-0 disabled:cursor-not-allowed disabled:opacity-50 transition-all font-medium text-slate-700 dark:text-slate-200"
                                         value={formData.role}
                                         onChange={e => {
                                             const val = e.target.value;
@@ -398,13 +515,19 @@ export default function UserManagement({ isEmbedded = false }) {
                                         }}
                                     >
                                         <option value="" disabled className="dark:bg-slate-900">Select a role</option>
-                                        {PREDEFINED_ROLES.map(role => (
-                                            <option key={role} value={role} className="dark:bg-slate-900">{role}</option>
-                                        ))}
-                                        <option value="other" className="dark:bg-slate-900">Other...</option>
+                                        <optgroup label="Functional Roles" className="dark:bg-slate-900 font-bold text-xs uppercase tracking-wider text-muted-foreground">
+                                            {PREDEFINED_ROLES.map(role => (
+                                                <option key={role} value={role} className="dark:bg-slate-900 font-medium normal-case">{role}</option>
+                                            ))}
+                                        </optgroup>
+                                        <optgroup label="Administrative" className="dark:bg-slate-900 font-bold text-xs uppercase tracking-wider text-muted-foreground">
+                                            {CORE_ROLES.map(role => (
+                                                <option key={role} value={role} className="dark:bg-slate-900 font-medium normal-case">{role}</option>
+                                            ))}
+                                        </optgroup>
+                                        <option value="other" className="dark:bg-slate-900 font-medium">Other...</option>
                                     </select>
                                 </div>
-
                                 {isOtherRole && (
                                     <div className="space-y-2 animate-in slide-in-from-top-2 duration-200">
                                         <label className="text-xs font-medium uppercase tracking-label text-muted-foreground dark:text-slate-500">
@@ -418,21 +541,9 @@ export default function UserManagement({ isEmbedded = false }) {
                                         />
                                     </div>
                                 )}
-
-                                <div className="space-y-2">
-                                    <label className="text-xs font-medium uppercase tracking-label text-muted-foreground dark:text-slate-500">
-                                        Email (Optional)
-                                    </label>
-                                    <Input
-                                        value={formData.email}
-                                        onChange={e => setFormData({ ...formData, email: e.target.value })}
-                                        placeholder="user@example.com"
-                                        className="border-slate-200 dark:border-slate-800 h-10 rounded-lg bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus-visible:ring-primary/20 transition-colors"
-                                    />
-                                </div>
                             </div>
                         </CardContent>
-                        <CardFooter className="bg-slate-50/50 dark:bg-slate-900/50 border-t border-slate-100 dark:border-slate-800 p-6 flex justify-end gap-3">
+                        <CardFooter className="bg-slate-50/50 dark:bg-slate-900/50 border-t border-slate-100 dark:border-slate-800 p-6 flex justify-end gap-4">
                             <Button variant="ghost" onClick={resetForm} className="font-medium h-10 rounded-xl px-6 text-sm dark:text-slate-400 dark:hover:bg-slate-800 transition-colors">Cancel</Button>
                             <Button onClick={handleSave} className="bg-primary hover:bg-primary/90 text-white font-medium h-10 rounded-xl px-8 shadow-sm text-sm">
                                 {editingId ? 'Save changes' : 'Create user'}
@@ -446,88 +557,33 @@ export default function UserManagement({ isEmbedded = false }) {
                 {categories.map((category) => (
                     <div key={category.title} className="space-y-5">
                         <div className="flex items-center gap-4 px-1 transition-colors">
-                            <h2 className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500 shrink-0">{category.title}</h2>
+                            <h2 className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500 shrink-0">{category.title}</h2>
                             <div className="h-[1px] flex-1 bg-slate-100 dark:bg-slate-800 transition-colors" />
-                            <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 bg-slate-50 dark:bg-slate-900 px-2.5 py-1 rounded-full border border-slate-100 dark:border-slate-800 uppercase tracking-widest leading-none transition-colors">
+                            <span className="text-xs font-semibold text-slate-400 dark:text-slate-500 bg-slate-50 dark:bg-slate-900 px-2 py-1 rounded-full border border-slate-100 dark:border-slate-800 uppercase tracking-widest leading-none transition-colors">
                                 {category.items.length} users
                             </span>
                         </div>
 
-                        <div className="grid gap-3">
-                            {category.items.map((u) => {
-                                const isNonAdmin = !u.isAdmin && u.role !== 'System Admin';
-                                const userProjectsCount = isNonAdmin ? projects.filter(p =>
-                                    p.managerId === u.id || p.members.some(m => m.userId === u.id)
-                                ).length : 0;
-
-                                return (
-                                    <div key={u.id} className="space-y-2">
-                                        <Card
-                                            className="group transition-all duration-200 border border-slate-200 dark:border-slate-800 shadow-sm rounded-xl overflow-hidden bg-white dark:bg-slate-800/50 cursor-pointer hover:border-primary/20 dark:hover:border-primary/40 hover:shadow-md"
-                                            onClick={() => isNonAdmin && navigate(`/admin/users/${u.id}/projects`)}
-                                        >
-                                            <div className="p-4 flex items-center gap-4">
-                                                <Avatar className="w-10 h-10 rounded-lg border border-slate-100 dark:border-slate-800 shadow-sm transition-transform group-hover:scale-110">
-                                                    <AvatarImage src={getAvatarUrl(u.avatar_url || u.name)} alt={u.name} />
-                                                    <AvatarFallback className="bg-slate-50 dark:bg-slate-900 text-slate-400 dark:text-slate-600 font-bold text-xs uppercase transition-colors">
-                                                        {u.name?.substring(0, 2) || 'US'}
-                                                    </AvatarFallback>
-                                                </Avatar>
-
-                                                <div className="flex-1 min-w-0 text-left">
-                                                    <div className="flex items-center gap-2 transition-colors">
-                                                        <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100 leading-none transition-colors">{u.name}</h3>
-                                                        <Badge variant="soft" className="capitalize text-xs font-medium tracking-label bg-slate-50 dark:bg-slate-900 text-slate-500 dark:text-slate-400 border border-slate-100 dark:border-slate-800 transition-colors">
-                                                            {u.role || 'Contributor'}
-                                                        </Badge>
-                                                        {isNonAdmin && userProjectsCount > 0 && (
-                                                            <Badge variant="blue" className="text-xs font-medium uppercase tracking-label transition-colors">
-                                                                {userProjectsCount} projects
-                                                            </Badge>
-                                                        )}
-                                                    </div>
-                                                    <div className="flex items-center gap-3 mt-1.5">
-                                                        <p className="text-xs text-muted-foreground dark:text-slate-400 font-medium transition-colors">{u.username}</p>
-                                                        <span className="text-slate-200 dark:text-slate-800">•</span>
-                                                        <p className="text-xs text-muted-foreground dark:text-slate-500 font-mono transition-colors">{u.id.substring(0, 8)}</p>
-                                                    </div>
-                                                </div>
-
-                                                <div className="flex items-center gap-2 shrink-0 transition-colors">
-                                                    {isNonAdmin && (
-                                                        <Button
-                                                            variant="ghost"
-                                                            size="sm"
-                                                            className="h-8 gap-2 text-[11px] font-bold text-slate-400 dark:text-slate-500 hover:text-primary dark:hover:text-primary hover:bg-primary/5 dark:hover:bg-primary/15 rounded-lg px-3 transition-all"
-                                                            onClick={(e) => { e.stopPropagation(); navigate(`/admin/users/${u.id}/projects`); }}
-                                                        >
-                                                            <FolderKanban className="w-3.5 h-3.5" />
-                                                            View Projects
-                                                        </Button>
-                                                    )}
-                                                    <div className="w-[1px] h-4 bg-slate-100 dark:bg-slate-800 mx-1 transition-colors" />
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="sm"
-                                                        className="h-8 w-8 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
-                                                        onClick={(e) => { e.stopPropagation(); startEdit(u); }}
-                                                    >
-                                                        <UserCog className="w-3.5 h-3.5" />
-                                                    </Button>
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="sm"
-                                                        className="h-8 w-8 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/30 text-slate-300 dark:text-slate-600 hover:text-red-500 dark:hover:text-red-400 transition-colors"
-                                                        onClick={(e) => openDeleteDialog(e, u)}
-                                                    >
-                                                        <Trash2 className="w-3.5 h-3.5" />
-                                                    </Button>
-                                                </div>
-                                            </div>
-                                        </Card>
+                        <div className="space-y-8">
+                            {category.groups ? (
+                                Object.entries(category.groups).sort(([a], [b]) => a.localeCompare(b)).map(([role, items]) => (
+                                    <div key={role} className="space-y-4">
+                                        <div className="flex items-center gap-3 px-1">
+                                            <div className="w-1.5 h-1.5 rounded-full bg-primary/40" />
+                                            <h3 className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">{role}</h3>
+                                            <div className="h-[1px] flex-1 bg-slate-50 dark:bg-slate-800/20" />
+                                            <span className="text-[10px] font-medium text-slate-400 dark:text-slate-500 italic lowercase">{items.length} {items.length === 1 ? 'user' : 'users'}</span>
+                                        </div>
+                                        <div className="grid gap-4">
+                                            {items.map((u) => renderUserCard(u))}
+                                        </div>
                                     </div>
-                                );
-                            })}
+                                ))
+                            ) : (
+                                <div className="grid gap-4">
+                                    {category.items.map((u) => renderUserCard(u))}
+                                </div>
+                            )}
                         </div>
                     </div>
                 ))}

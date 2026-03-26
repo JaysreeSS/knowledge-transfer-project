@@ -107,7 +107,7 @@ export default function MyHandovers() {
                                                     <td className="p-4 py-5 transition-colors">
                                                         <div className="flex flex-col gap-1 transition-colors">
                                                             <span className="text-sm font-semibold text-slate-800 dark:text-slate-200 group-hover:text-primary dark:group-hover:text-primary transition-colors">{p.name}</span>
-                                                            <Badge variant="outline" className={`w-fit rounded-lg px-2 py-0 text-[10px] font-medium uppercase tracking-label border transition-colors ${p.lifecycleMode === 'ACTIVE'
+                                                            <Badge variant="outline" className={`w-fit rounded-lg px-2 py-0 text-xs font-medium uppercase tracking-label border transition-colors ${p.lifecycleMode === 'ACTIVE'
                                                                 ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 border-indigo-100 dark:border-indigo-800'
                                                                 : p.lifecycleMode === 'REVERSE_KT'
                                                                     ? 'bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 border-amber-100 dark:border-amber-800'
@@ -118,12 +118,12 @@ export default function MyHandovers() {
                                                         </div>
                                                     </td>
                                                     <td className="p-4 transition-colors">
-                                                        <span className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-label bg-slate-100 dark:bg-slate-900 px-2.5 py-1 rounded-md border dark:border-slate-800 transition-colors">
+                                                        <span className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-label bg-slate-100 dark:bg-slate-900 px-2 py-1 rounded-md border dark:border-slate-800 transition-colors">
                                                             {myRole}
                                                         </span>
                                                     </td>
                                                     <td className="p-4 transition-colors">
-                                                        <div className={`px-2.5 py-1 rounded-md text-xs font-medium uppercase tracking-label w-fit border transition-colors ${(status === 'Completed' || status === 'Signed Off')
+                                                        <div className={`px-2 py-1 rounded-md text-xs font-medium uppercase tracking-label w-fit border transition-colors ${(status === 'Completed' || status === 'Signed Off')
                                                             ? 'bg-emerald-50 dark:bg-emerald-950/20 text-emerald-600 dark:text-emerald-400 border-emerald-100 dark:border-emerald-800'
                                                             : status === 'In Progress'
                                                                 ? 'bg-blue-50 dark:bg-blue-950/20 text-blue-600 dark:text-blue-400 border-blue-100 dark:border-blue-800'
@@ -133,14 +133,14 @@ export default function MyHandovers() {
                                                         </div>
                                                     </td>
                                                     <td className="p-4 transition-colors">
-                                                        <div className="flex items-center gap-3 transition-colors">
+                                                        <div className="flex items-center gap-4 transition-colors">
                                                             <div className="flex-1 w-24 h-1.5 bg-slate-100 dark:bg-slate-900 rounded-full overflow-hidden transition-colors">
                                                                 <div
                                                                     className={`h-full transition-all duration-1000 ${completion === 100 ? 'bg-emerald-500' : 'bg-primary'}`}
                                                                     style={{ width: `${completion}%` }}
                                                                 />
                                                             </div>
-                                                            <span className="text-[10px] font-bold text-slate-600 dark:text-slate-400 min-w-[30px] text-right transition-colors">{completion}%</span>
+                                                            <span className="text-xs font-semibold text-slate-600 dark:text-slate-400 min-w-[30px] text-right transition-colors">{completion}%</span>
                                                         </div>
                                                     </td>
                                                     <td className="p-4 text-right transition-colors">
@@ -176,7 +176,7 @@ export default function MyHandovers() {
                                         variant={currentPage === i + 1 ? "default" : "outline"}
                                         size="sm"
                                         onClick={() => setCurrentPage(i + 1)}
-                                        className={`rounded-lg h-9 w-9 p-0 text-[11px] font-bold transition-all ${currentPage === i + 1
+                                        className={`rounded-lg h-9 w-9 p-0 text-xs font-semibold transition-all ${currentPage === i + 1
                                             ? 'bg-primary text-white shadow-sm'
                                             : 'border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors'
                                             }`}

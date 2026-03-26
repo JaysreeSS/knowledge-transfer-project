@@ -4,6 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { getAvatarUrl } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
 
 import { useAdmin } from "../../contexts/AdminContext.jsx";
@@ -11,7 +13,8 @@ import { useProjects } from "../../contexts/ProjectContext.jsx";
 
 export default function AdminDashboard() {
     const navigate = useNavigate();
-    const { users, templates } = useAdmin();
+    const { users, templates, settings } = useAdmin();
+    const themeColor = settings?.theme_color?.replace('#', '') || '7c3aed';
     const { projects: allProjects } = useProjects();
 
     const activeProjects = allProjects.filter(p => p.status !== 'Completed').length;
@@ -49,6 +52,7 @@ export default function AdminDashboard() {
         .map(u => ({
             name: u.name,
             role: 'Project Manager',
+            avatar_url: u.avatar_url,
             project: allProjects.find(p => p.managerName === u.name)?.name || "No active project"
         }));
 
@@ -106,23 +110,26 @@ export default function AdminDashboard() {
                             <Briefcase className="w-4 h-4 text-primary/70" />
                             Team overview
                         </CardTitle>
-                        <CardDescription className="text-[11px] font-medium text-slate-400 dark:text-slate-500 mt-1">Manager activity and role distribution</CardDescription>
+                        <CardDescription className="text-xs font-medium text-slate-400 dark:text-slate-500 mt-1">Manager activity and role distribution</CardDescription>
                     </CardHeader>
                     <CardContent className="p-6 space-y-8 flex-1">
                         {/* Managers List */}
                         <div className="space-y-4">
-                            <h4 className="text-xs font-medium uppercase tracking-label text-slate-500 dark:text-slate-400 transition-colors">Project leadership</h4>
+                            <h4 className="text-[11px] font-semibold uppercase tracking-tight text-slate-400 dark:text-slate-500 transition-colors">Project Leadership</h4>
                             <div className="bg-slate-50/50 dark:bg-slate-900/30 rounded-xl border border-slate-100 dark:border-slate-800 p-3 transition-colors">
                                 <div className="space-y-2 max-h-[160px] overflow-y-auto pr-1 custom-scrollbar">
                                     {managers.length > 0 ? (
                                         managers.map((mgr, i) => (
-                                            <div key={i} className="flex items-center gap-3 p-2.5 rounded-lg bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-sm transition-colors">
-                                                <div className="w-8 h-8 min-w-[32px] rounded-full bg-primary/5 dark:bg-primary/20 border border-primary/10 dark:border-primary/20 flex items-center justify-center font-semibold text-primary dark:text-primary-foreground text-xs transition-colors">
-                                                    {mgr.name.charAt(0)}
-                                                </div>
+                                            <div key={i} className="flex items-center gap-4 p-2.5 rounded-lg bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-sm transition-colors">
+                                                <Avatar className="w-8 h-8 min-w-[32px] rounded-full border border-primary/10 dark:border-primary/20 shadow-sm transition-colors shrink-0">
+                                                    <AvatarImage src={getAvatarUrl(mgr.avatar_url || mgr.name, themeColor)} alt={mgr.name} />
+                                                    <AvatarFallback className="bg-primary/5 dark:bg-primary/20 text-primary dark:text-primary font-semibold text-xs transition-colors">
+                                                        {mgr.name.charAt(0)}
+                                                    </AvatarFallback>
+                                                </Avatar>
                                                 <div className="flex-1 min-w-0 transition-colors">
                                                     <p className="text-sm font-semibold text-slate-900 dark:text-slate-100 truncate transition-colors">{mgr.name}</p>
-                                                    <p className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-label truncate transition-colors">{mgr.role}</p>
+                                                    <p className="text-[11px] font-semibold text-slate-400 dark:text-slate-500 capitalize tracking-tight truncate transition-colors">{mgr.role}</p>
                                                 </div>
                                             </div>
                                         ))
@@ -137,15 +144,15 @@ export default function AdminDashboard() {
 
                         {/* Role Distribution */}
                         <div className="space-y-4">
-                            <h4 className="text-xs font-medium uppercase tracking-label text-slate-500 dark:text-slate-400">Organization roles</h4>
+                            <h4 className="text-[11px] font-semibold uppercase tracking-tight text-slate-400 dark:text-slate-500 transition-colors">Organization Roles</h4>
                             <div className="grid grid-cols-2 gap-4">
                                 {roleStats.map((role, i) => (
                                     <div key={i} className={`p-3 rounded-lg border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 flex flex-col gap-1 shadow-sm hover:border-slate-200 dark:hover:border-slate-700 transition-colors`}>
                                         <div className="flex items-center gap-1.5">
                                             <div className={`w-1.5 h-1.5 rounded-full ${role.color}`} />
-                                            <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-tight">{role.label}</span>
+                                            <span className="text-[11px] font-semibold capitalize tracking-tight text-slate-400 dark:text-slate-500 italic">{role.label}</span>
                                         </div>
-                                        <span className="text-xl font-bold text-slate-900 dark:text-slate-100">{role.count}</span>
+                                        <span className="text-xl font-semibold text-slate-900 dark:text-slate-100">{role.count}</span>
                                     </div>
                                 ))}
                             </div>
@@ -161,7 +168,7 @@ export default function AdminDashboard() {
                                 <FolderKanban className="w-4 h-4 text-primary/70" />
                                 Active projects
                             </CardTitle>
-                            <CardDescription className="text-[11px] font-medium text-slate-400 dark:text-slate-500 mt-1">Tracking live project completion</CardDescription>
+                            <CardDescription className="text-xs font-medium text-slate-400 dark:text-slate-500 mt-1">Tracking live project completion</CardDescription>
                         </div>
                         <Button variant="ghost" size="sm" className="hidden sm:flex text-primary hover:text-primary hover:bg-primary/5 font-medium tracking-button text-sm" onClick={() => navigate('/admin/projects')}>
                             View all <ChevronRight className="w-3.5 ml-1" />
@@ -174,9 +181,9 @@ export default function AdminDashboard() {
                                     <div className="flex justify-between items-center mb-2.5 transition-colors">
                                         <div className="transition-colors">
                                             <h4 className="text-sm font-semibold text-slate-900 dark:text-slate-100 group-hover:text-primary transition-colors">{proj.name}</h4>
-                                            <p className="text-[11px] text-slate-400 dark:text-slate-500 font-medium italic transition-colors">Lead: {proj.managerName || 'Unassigned'}</p>
+                                            <p className="text-xs text-slate-400 dark:text-slate-500 font-medium italic transition-colors">Lead: {proj.managerName || 'Unassigned'}</p>
                                         </div>
-                                        <Badge variant={proj.status === 'Completed' ? 'success' : 'blue'} className="text-[10px] px-2 transition-colors">
+                                        <Badge variant={proj.status === 'Completed' ? 'success' : 'blue'} className="text-xs px-2 transition-colors">
                                             {proj.status}
                                         </Badge>
                                     </div>

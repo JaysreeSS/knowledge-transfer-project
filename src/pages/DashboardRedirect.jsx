@@ -16,7 +16,7 @@ export default function DashboardRedirect() {
         <div className="min-h-screen flex items-center justify-center bg-background">
             <div className="flex flex-col items-center gap-4">
                 <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-                <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Mapping Authorities...</p>
+                <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">Mapping Authorities...</p>
             </div>
         </div>
     );

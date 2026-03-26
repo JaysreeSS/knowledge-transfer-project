@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
+import { hexToHsl } from "@/lib/utils";
 
 const AdminContext = createContext(undefined);
 
@@ -11,6 +12,15 @@ export const AdminProvider = ({ children }) => {
 
     // Initial load and Realtime Subscriptions
     useEffect(() => {
+        // Immediate style apply from localStorage to prevent flash of default theme
+        const storedColor = localStorage.getItem('a_theme_color');
+        if (storedColor) {
+            const hsl = hexToHsl(storedColor);
+            if (hsl) {
+                document.documentElement.style.setProperty('--primary', `${hsl.h} ${hsl.s}% ${hsl.l}%`);
+            }
+        }
+
         fetchData();
 
         // Realtime subscription for users table
@@ -63,9 +73,11 @@ export const AdminProvider = ({ children }) => {
                     setSettings(payload.new);
                     // Sync to localStorage for immediate UI use in layouts
                     localStorage.setItem('s_portal_name', payload.new.portal_name);
-                    localStorage.setItem('p_categories', JSON.stringify(payload.new.categories));
                     localStorage.setItem('p_default_period', payload.new.default_project_period.toString());
-                    localStorage.setItem('n_email_alerts', payload.new.enable_email_alerts.toString());
+                    localStorage.setItem('a_theme_color', payload.new.theme_color);
+                    localStorage.setItem('a_sidebar_style', payload.new.sidebar_style);
+                    localStorage.setItem('a_border_radius', payload.new.border_radius);
+                    localStorage.setItem('a_sidebar_position', payload.new.sidebar_position);
                 }
             })
             .subscribe();
@@ -76,6 +88,33 @@ export const AdminProvider = ({ children }) => {
             supabase.removeChannel(settingsSubscription);
         };
     }, []);
+
+    // Apply Theme & Style Dynamically
+    useEffect(() => {
+        if (settings) {
+            const root = document.documentElement;
+            
+            // 1. Theme Color
+            if (settings.theme_color) {
+                const hsl = hexToHsl(settings.theme_color);
+                if (hsl) {
+                    root.style.setProperty('--primary', `${hsl.h} ${hsl.s}% ${hsl.l}%`);
+                }
+            }
+            
+            // 2. Border Radius Mapping
+            const mapRadius = (r) => {
+                switch(r) {
+                    case 'rounded-none': return '0px';
+                    case 'rounded-lg': return '0.5rem';
+                    case 'rounded-2xl': return '1rem';
+                    case 'rounded-full': return '1.5rem';
+                    default: return '0.75rem';
+                }
+            };
+            root.style.setProperty('--radius', mapRadius(settings.border_radius));
+        }
+    }, [settings?.theme_color, settings?.border_radius]);
 
     const fetchData = async () => {
         setLoading(true);
@@ -114,9 +153,11 @@ export const AdminProvider = ({ children }) => {
                 setSettings(settingsData);
                 // Sync to localStorage
                 localStorage.setItem('s_portal_name', settingsData.portal_name);
-                localStorage.setItem('p_categories', JSON.stringify(settingsData.categories));
                 localStorage.setItem('p_default_period', settingsData.default_project_period.toString());
-                localStorage.setItem('n_email_alerts', settingsData.enable_email_alerts.toString());
+                localStorage.setItem('a_theme_color', settingsData.theme_color);
+                localStorage.setItem('a_sidebar_style', settingsData.sidebar_style);
+                localStorage.setItem('a_border_radius', settingsData.border_radius);
+                localStorage.setItem('a_sidebar_position', settingsData.sidebar_position);
             }
         } catch (error) {
             console.error("Error in fetchData:", error);

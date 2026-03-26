@@ -10,27 +10,37 @@ export default {
     theme: {
         extend: {
             borderRadius: {
-                lg: "var(--radius)",
-                md: "calc(var(--radius) - 2px)",
-                sm: "calc(var(--radius) - 4px)"
+                xl: "var(--radius)",
+                lg: "calc(var(--radius) * 0.8)",
+                md: "calc(var(--radius) * 0.6)",
+                sm: "calc(var(--radius) * 0.4)",
+                full: "9999px"
             },
             fontFamily: {
                 sans: ['Inter', 'system-ui', 'sans-serif'],
                 mono: ['JetBrains Mono', 'Fira Code', 'monospace']
             },
             fontSize: {
-                xs: ['12px', '1.6'],
-                sm: ['13px', '1.6'],
-                base: ['14px', '1.6'],
-                lg: ['16px', '1.5'],
-                xl: ['18px', '1.4'],
-                '2xl': ['24px', '1.3']
+                xs: ['12px', '1.5'],
+                sm: ['14px', '1.5'],
+                base: ['16px', '1.5'],
+                lg: ['18px', '1.2'],
+                xl: ['20px', '1.2'],
+                '2xl': ['28px', '1.2'],
+                '3xl': ['32px', '1.2'],
+                '4xl': ['40px', '1.2']
             },
-            letterSpacing: {
-                'page-title': '-0.01em',
-                'section-title': '-0.005em',
-                'label': '0.01em',
-                'button': '0.01em',
+            fontWeight: {
+                normal: '400',
+                medium: '500',
+                semibold: '600',
+            },
+            boxShadow: {
+                xs: '0 1px 2px 0 rgb(0 0 0 / 0.05)',
+                sm: '0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1)',
+                md: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)',
+                lg: '0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)',
+                xl: '0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)',
             },
             colors: {
                 background: "hsl(var(--background))",
@@ -43,12 +53,20 @@ export default {
                 "primary-foreground": "hsl(var(--primary-foreground))",
                 secondary: "hsl(var(--secondary))",
                 "secondary-foreground": "hsl(var(--secondary-foreground))",
+                tertiary: "hsl(var(--tertiary))",
+                "tertiary-foreground": "hsl(var(--tertiary-foreground))",
                 muted: "hsl(var(--muted))",
                 "muted-foreground": "hsl(var(--muted-foreground))",
                 accent: "hsl(var(--accent))",
                 "accent-foreground": "hsl(var(--accent-foreground))",
                 destructive: "hsl(var(--destructive))",
                 "destructive-foreground": "hsl(var(--destructive-foreground))",
+                success: "hsl(var(--success))",
+                "success-foreground": "hsl(var(--success-foreground))",
+                warning: "hsl(var(--warning))",
+                "warning-foreground": "hsl(var(--warning-foreground))",
+                info: "hsl(var(--info))",
+                "info-foreground": "hsl(var(--info-foreground))",
                 border: "hsl(var(--border))",
                 input: "hsl(var(--input))",
                 ring: "hsl(var(--ring))"

@@ -9,10 +9,13 @@ import { useNavigate } from 'react-router-dom';
 import { Input } from '@/components/ui/input';
 import { useAdmin } from '../../contexts/AdminContext.jsx';
 import { toast } from 'sonner';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { getAvatarUrl } from '@/lib/utils';
 
 export default function AdminProjects({ isEmbedded = false }) {
     const { projects, deleteProject } = useProjects();
-    const { users } = useAdmin();
+    const { users, settings } = useAdmin();
+    const themeColor = settings?.theme_color?.replace('#', '') || localStorage.getItem('a_theme_color')?.replace('#', '') || '7c3aed';
     const { user } = useAuth();
     const navigate = useNavigate();
     const [searchTerm, setSearchTerm] = useState('');
@@ -106,7 +109,6 @@ export default function AdminProjects({ isEmbedded = false }) {
                                         <tr>
                                             <th className="p-4 text-xs font-medium uppercase tracking-label text-slate-500 dark:text-slate-400">Project detail</th>
                                             <th className="p-4 text-xs font-medium uppercase tracking-label text-slate-500 dark:text-slate-400">Owner / manager</th>
-                                            <th className="p-4 text-xs font-medium uppercase tracking-label text-slate-500 dark:text-slate-400">Category</th>
                                             <th className="p-4 text-xs font-medium uppercase tracking-label text-slate-500 dark:text-slate-400 text-center">Status</th>
                                             <th className="p-4 text-xs font-medium uppercase tracking-label text-slate-500 dark:text-slate-400">Progress</th>
                                             <th className="p-4 text-xs font-medium uppercase tracking-label text-slate-500 dark:text-slate-400">Deadline</th>
@@ -122,7 +124,7 @@ export default function AdminProjects({ isEmbedded = false }) {
                                                     <td className="p-4 py-5">
                                                         <div className="flex flex-col gap-0.5">
                                                             <span className="text-sm font-semibold text-slate-900 dark:text-slate-100 group-hover:text-primary transition-colors">{p.name}</span>
-                                                            <span className="text-[11px] text-slate-400 dark:text-slate-500 font-medium truncate max-w-[200px]">{p.description || 'No description provided.'}</span>
+                                                            <span className="text-xs text-slate-400 dark:text-slate-500 font-medium truncate max-w-[200px]">{p.description || 'No description provided.'}</span>
                                                         </div>
                                                     </td>
                                                     <td className="p-4">
@@ -131,38 +133,35 @@ export default function AdminProjects({ isEmbedded = false }) {
                                                                 const manager = users.find(u => u.id === p.managerId) || users.find(u => u.name === p.managerName) || { name: p.managerName };
                                                                 return (
                                                                     <>
-                                                                        <div className="w-7 h-7 rounded-full bg-slate-100 dark:bg-slate-900 flex items-center justify-center text-[10px] font-bold text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-800 transition-colors">
-                                                                            {manager.name?.charAt(0) || 'M'}
-                                                                        </div>
+                                                                        <Avatar className="w-7 h-7 rounded-full border border-primary/10 dark:border-primary/20 shadow-sm transition-colors shrink-0">
+                                                                            <AvatarImage src={getAvatarUrl(manager.avatar_url || manager.name, themeColor)} alt={manager.name} />
+                                                                            <AvatarFallback className="bg-primary/5 dark:bg-primary/20 text-primary dark:text-primary font-semibold text-[10px] uppercase transition-colors">
+                                                                                {manager.name?.charAt(0) || 'M'}
+                                                                            </AvatarFallback>
+                                                                        </Avatar>
                                                                         <span className="text-xs font-medium text-slate-700 dark:text-slate-300 transition-colors">{manager.name}</span>
                                                                     </>
                                                                 );
                                                             })()}
                                                         </div>
                                                     </td>
-                                                    <td className="p-4">
-                                                        {p.category && (
-                                                            <Badge variant="outline" className="text-[9px] font-bold uppercase tracking-wider py-0 px-2 bg-slate-50 dark:bg-slate-900 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-800 transition-colors">
-                                                                {p.category}
-                                                            </Badge>
-                                                        )}
-                                                    </td>
+
                                                     <td className="p-4">
                                                         <div className="flex justify-center">
-                                                            <Badge variant={(p.status === 'Completed' || p.status === 'Signed Off') ? 'success' : p.status === 'In Progress' ? 'blue' : 'soft'}>
+                                                            <Badge variant={(p.status === 'Completed' || p.status === 'Signed Off') ? 'success' : p.status === 'In Progress' ? 'blue' : 'soft'} className="normal-case font-semibold">
                                                                 {p.status === 'Completed' || p.status === 'Signed Off' ? 'Signed Off' : (p.status || 'Active')}
                                                             </Badge>
                                                         </div>
                                                     </td>
                                                     <td className="p-4">
-                                                        <div className="flex items-center gap-3">
+                                                        <div className="flex items-center gap-4">
                                                             <div className="flex-1 w-24 h-1.5 bg-slate-100 dark:bg-slate-900 rounded-full overflow-hidden">
                                                                 <div
                                                                     className={`h-full transition-all duration-1000 ${displayCompletion === 100 ? 'bg-emerald-500' : 'bg-primary/70'}`}
                                                                     style={{ width: `${displayCompletion}%` }}
                                                                 />
                                                             </div>
-                                                            <span className="text-[11px] font-semibold text-slate-600 dark:text-slate-400 min-w-[30px]">{displayCompletion}%</span>
+                                                            <span className="text-xs font-semibold text-slate-600 dark:text-slate-400 min-w-[30px]">{displayCompletion}%</span>
                                                         </div>
                                                     </td>
                                                     <td className="p-4">
@@ -199,7 +198,7 @@ export default function AdminProjects({ isEmbedded = false }) {
                         {/* Pagination Controls */}
                         {totalPages > 1 && (
                             <div className="flex items-center justify-between px-2 pt-2">
-                                <p className="text-[11px] font-medium text-slate-400">
+                                <p className="text-xs font-medium text-slate-400">
                                     Showing {(currentPage - 1) * itemsPerPage + 1} to {Math.min(currentPage * itemsPerPage, filteredProjects.length)} of {filteredProjects.length} projects
                                 </p>
                                 <div className="flex items-center gap-1.5">
@@ -218,7 +217,7 @@ export default function AdminProjects({ isEmbedded = false }) {
                                             variant={currentPage === i + 1 ? "default" : "outline"}
                                             size="sm"
                                             onClick={() => setCurrentPage(i + 1)}
-                                            className={`rounded-lg h-8 w-8 p-0 text-[11px] font-semibold transition-all ${currentPage === i + 1 ? 'bg-primary text-white border-primary shadow-sm' : 'border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 dark:bg-slate-900'
+                                            className={`rounded-lg h-8 w-8 p-0 text-xs font-semibold transition-all ${currentPage === i + 1 ? 'bg-primary text-white border-primary shadow-sm' : 'border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 dark:bg-slate-900'
                                                 }`}
                                         >
                                             {i + 1}

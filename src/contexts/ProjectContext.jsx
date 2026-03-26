@@ -21,8 +21,7 @@ export const ProjectProvider = ({ children }) => {
                     id,
                     user_id,
                     kt_role,
-                    functional_role,
-                    users (name)
+                    users (name, role)
                 ),
                 project_sections (
                     id,
@@ -65,6 +64,7 @@ export const ProjectProvider = ({ children }) => {
                     updated_at
                 )
             `)
+            .neq('status', 'Deleted')
             .order('created_at', { ascending: false });
 
         if (error) {
@@ -94,7 +94,7 @@ export const ProjectProvider = ({ children }) => {
                     userId: m.user_id,
                     name: m.users?.name || 'Unknown',
                     ktRole: m.kt_role,
-                    functionalRole: m.functional_role
+                    functionalRole: m.users?.role || 'Member'
                 })),
                 sections: (p.project_sections || [])
                     .sort((a, b) => (a.order || 0) - (b.order || 0))
@@ -195,7 +195,7 @@ export const ProjectProvider = ({ children }) => {
 
     // Create a new project and sync to Supabase
     const createProject = async (projectData) => {
-        const { name, description, managerId, managerName, members, sections, deadline, category } = projectData;
+        const { name, description, managerId, managerName, members, sections, deadline } = projectData;
 
         // 1. Insert Project
         const { data: project, error: projectError } = await supabase
@@ -208,7 +208,6 @@ export const ProjectProvider = ({ children }) => {
                 status: 'Not Started',
                 completion: 0,
                 deadline: deadline || null,
-                category: category || 'General',
                 lifecycle_mode: projectData.lifecycleMode || (members.some(m => m.ktRole === 'Receiver') ? 'TRANSITION' : 'ACTIVE')
             }])
             .select()
@@ -223,8 +222,7 @@ export const ProjectProvider = ({ children }) => {
         const membersToInsert = (members || []).map(m => ({
             project_id: project.id,
             user_id: m.userId,
-            kt_role: m.ktRole,
-            functional_role: m.functionalRole
+            kt_role: m.ktRole
         }));
 
         if (membersToInsert.length > 0) {
@@ -686,12 +684,11 @@ export const ProjectProvider = ({ children }) => {
         await fetchProjects();
     };
 
-    // Delete a project
+    // Soft delete a project
     const deleteProject = async (projectId) => {
-        // Assuming foreign keys are set to ON DELETE CASCADE
-        const { error } = await supabase.from("projects").delete().eq("id", projectId);
+        const { error } = await supabase.from("projects").update({ status: 'Deleted' }).eq("id", projectId);
         if (error) {
-            console.error("Supabase delete error:", error);
+            console.error("Supabase soft delete error:", error);
             return;
         }
         setProjects((prev) => prev.filter((p) => p.id !== projectId));
@@ -701,8 +698,8 @@ export const ProjectProvider = ({ children }) => {
     const updateMember = async (projectId, memberId, updates) => {
         // Map UI field names to DB names if necessary
         const dbUpdates = {};
-        if (updates.functionalRole !== undefined) dbUpdates.functional_role = updates.functionalRole;
         if (updates.ktRole !== undefined) dbUpdates.kt_role = updates.ktRole;
+        // functionalRole updates are ignored as we fetch from users table now
 
         const { error } = await supabase.from("project_members").update(dbUpdates).eq("id", memberId);
         if (error) {
@@ -734,12 +731,11 @@ export const ProjectProvider = ({ children }) => {
             .insert([{
                 project_id: projectId,
                 user_id: userId,
-                kt_role: ktRole,
-                functional_role: functionalRole
+                kt_role: ktRole
             }])
             .select(`
                 *,
-                users (name)
+                users (name, role)
             `)
             .single();
 
@@ -753,7 +749,7 @@ export const ProjectProvider = ({ children }) => {
             userId: data.user_id,
             name: data.users?.name || 'Unknown',
             ktRole: data.kt_role,
-            functionalRole: data.functional_role
+            functionalRole: data.users?.role || 'Member'
         };
 
         setProjects((prev) =>
@@ -1023,6 +1019,7 @@ export const ProjectProvider = ({ children }) => {
                 updateReceiverProgress,
                 getReceiverCompletion,
                 initReceiverProgress,
+                fetchProjects,
                 loading
             }}
         >

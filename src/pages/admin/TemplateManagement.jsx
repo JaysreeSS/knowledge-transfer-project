@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { FileText, Plus, Trash2, ChevronLeft, Layout, Lock, Info, ExternalLink, Paperclip, Loader2, Pencil, ChevronUp, ChevronDown } from 'lucide-react';
+import { FileText, Plus, Trash2, ChevronLeft, Layout, Lock, Info, ExternalLink, Paperclip, Loader2, Pencil, ChevronUp, ChevronDown, Search } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
@@ -18,6 +18,7 @@ export default function TemplateManagement({ isEmbedded = false }) {
     const [editingId, setEditingId] = useState(null);
     const [saving, setSaving] = useState(false);
     const [pendingDeleteTemplateId, setPendingDeleteTemplateId] = useState(null);
+    const [searchTerm, setSearchTerm] = useState('');
 
     const handleAdd = async () => {
         if (!newTitle.trim()) return;
@@ -75,10 +76,21 @@ export default function TemplateManagement({ isEmbedded = false }) {
         <div className={`px-8 md:px-12 py-6 max-w-7xl mx-auto space-y-8 animate-in fade-in duration-500 ${isEmbedded ? 'px-0 py-0' : ''}`}>
 
             {!isEmbedded && (
-                <header className="space-y-1 transition-colors">
-                    <h1 className="text-2xl font-semibold tracking-page-title text-slate-900 dark:text-slate-100 transition-colors">Section templates</h1>
-                    <p className="text-slate-500 dark:text-slate-400 text-sm font-medium transition-colors">Define and manage standardized sections for knowledge transfer projects.</p>
-                </header>
+                <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 transition-all">
+                    <header className="space-y-1 transition-colors">
+                        <h1 className="text-2xl font-semibold tracking-page-title text-slate-900 dark:text-slate-100 transition-colors">Section templates</h1>
+                        <p className="text-slate-500 dark:text-slate-400 text-sm font-medium transition-colors">Define and manage standardized sections for knowledge transfer projects.</p>
+                    </header>
+                    <div className="relative group w-full md:w-80">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-primary transition-colors" />
+                        <Input
+                            placeholder="Search templates..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="w-full pl-10 pr-4 h-10 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg shadow-sm focus:ring-primary/20 focus:border-primary outline-none text-sm transition-all font-medium dark:text-slate-200"
+                        />
+                    </div>
+                </div>
             )}
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -87,7 +99,7 @@ export default function TemplateManagement({ isEmbedded = false }) {
                     <Card className="shadow-sm border border-slate-200 dark:border-slate-800 rounded-xl bg-white dark:bg-slate-800/50 sticky top-8 transition-colors">
                         <CardHeader className="p-5 border-b border-slate-100 dark:border-slate-800 bg-slate-50/30 dark:bg-slate-900/20">
                             <CardTitle className="text-lg font-semibold tracking-section-title text-slate-900 dark:text-slate-100">{editingId ? 'Edit section template' : 'New section template'}</CardTitle>
-                            <CardDescription className="text-[11px] font-medium text-slate-400 dark:text-slate-500 mt-1">{editingId ? 'Modify existing template details.' : 'Define a new required section.'}</CardDescription>
+                            <CardDescription className="text-xs font-medium text-slate-400 dark:text-slate-500 mt-1">{editingId ? 'Modify existing template details.' : 'Define a new required section.'}</CardDescription>
                         </CardHeader>
                         <CardContent className="p-5 space-y-4">
                             <div className="space-y-1.5">
@@ -146,30 +158,33 @@ export default function TemplateManagement({ isEmbedded = false }) {
 
                     {templates.length === 0 && (
                         <div className="text-center py-20 text-slate-400 dark:text-slate-600 bg-slate-50/50 dark:bg-slate-900/20 rounded-xl border border-dashed border-slate-200 dark:border-slate-800 transition-colors">
-                            <Layout className="w-10 h-10 mx-auto mb-3 opacity-20 transition-colors" />
+                            <Layout className="w-10 h-10 mx-auto mb-4 opacity-20 transition-colors" />
                             <p className="text-sm font-medium transition-colors">No templates created yet.</p>
                         </div>
                     )}
 
-                    <div className="grid gap-3">
-                        {[...templates].sort((a, b) => (a.order || 0) - (b.order || 0)).map((t, idx, sortedArray) => (
+                    <div className="grid gap-4">
+                        {[...templates].filter(t => 
+                            t.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                            (t.description || '').toLowerCase().includes(searchTerm.toLowerCase())
+                        ).sort((a, b) => (a.order || 0) - (b.order || 0)).map((t, idx, sortedArray) => (
                             <Card key={t.id} className="group hover:border-primary/20 transition-all border border-slate-200 dark:border-slate-800 shadow-sm rounded-xl bg-white dark:bg-slate-800/50">
-                                <CardContent className="p-4 flex items-start justify-between">
-                                    <div className="flex items-start gap-4">
+                                <CardContent className="p-4 flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+                                    <div className="flex items-start gap-4 flex-1 min-w-0">
                                         <div className="w-9 h-9 rounded-lg bg-slate-50 dark:bg-slate-900 flex items-center justify-center text-slate-400 dark:text-slate-600 group-hover:bg-primary/5 dark:group-hover:bg-primary/10 group-hover:text-primary transition-colors shrink-0 border border-slate-100 dark:border-slate-800 transition-colors">
                                             <Layout className="w-4 h-4" />
                                         </div>
-                                        <div className="space-y-1 transition-colors">
-                                            <h4 className="text-sm font-semibold text-slate-900 dark:text-slate-100 transition-colors">{t.title}</h4>
+                                        <div className="space-y-1 transition-colors flex-1 min-w-0">
+                                            <h4 className="text-sm font-semibold text-slate-900 dark:text-slate-100 transition-colors truncate">{t.title}</h4>
                                             {t.description && (
-                                                <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed font-medium max-w-md line-clamp-2 transition-colors">{t.description}</p>
+                                                <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed font-medium max-w-md line-clamp-2 transition-colors">{t.description}</p>
                                             )}
                                             <div className="flex items-center gap-2 mt-2 transition-colors">
-                                                <span className="text-xs font-medium uppercase tracking-label text-slate-500 dark:text-slate-500 bg-slate-50 dark:bg-slate-900 px-1.5 py-0.5 rounded border border-slate-100 dark:border-slate-800 transition-colors">Sequence {t.order || idx + 1}</span>
+                                                <span className="text-xs font-medium uppercase tracking-label text-slate-500 dark:text-slate-500 bg-slate-50 dark:bg-slate-900 px-2 py-0.5 rounded border border-slate-100 dark:border-slate-800 transition-colors">Sequence {t.order || idx + 1}</span>
                                             </div>
                                         </div>
                                     </div>
-                                    <div className="flex items-center gap-1 shrink-0 ml-4">
+                                    <div className="flex items-center gap-1 shrink-0 sm:ml-4 sm:pt-1">
                                         <Button
                                             variant="ghost"
                                             size="icon"

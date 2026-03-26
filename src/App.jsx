@@ -20,6 +20,7 @@ import CreateProject from "./pages/manager/CreateProject.jsx";
 import AllProjects from "./pages/manager/AllProjects.jsx";
 import MyHandovers from "./pages/manager/MyHandovers.jsx";
 import ManagerHandoverDetails from "./pages/manager/ManagerHandoverDetails.jsx";
+import ManagerOnboardings from "./pages/manager/ManagerOnboardings.jsx";
 import ProjectDetails from "./pages/ProjectDetails.jsx";
 
 // ICR Module Imports
@@ -37,7 +38,19 @@ import GeneralLayout from "./components/GeneralLayout.jsx";
 import DynamicFavicon from "./components/DynamicFavicon.jsx";
 
 function ProtectedRoute({ allowedRoles }) {
-    const { isAuthenticated, user } = useAuth();
+    const { isAuthenticated, user, loading } = useAuth();
+    
+    if (loading) {
+        return (
+            <div className="h-screen w-screen flex items-center justify-center bg-white dark:bg-slate-950">
+                <div className="flex flex-col items-center gap-4">
+                    <div className="w-10 h-10 border-4 border-primary/20 border-t-primary rounded-full animate-spin"></div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400 animate-pulse">Restoring Session</p>
+                </div>
+            </div>
+        );
+    }
+    
     if (!isAuthenticated) return <Navigate to="/" replace />;
 
     if (allowedRoles && user) {
@@ -86,6 +99,7 @@ export default function App() {
                                             <Route path="/manager/projects/:projectId" element={<ProjectDetails />} />
                                             <Route path="/manager/my-handovers" element={<MyHandovers />} />
                                             <Route path="/manager/my-handovers/:projectId" element={<ManagerHandoverDetails />} />
+                                            <Route path="/manager/my-onboardings" element={<ManagerOnboardings />} />
                                             <Route path="/manager/account" element={<MyAccount />} />
                                         </Route>
                                     </Route>

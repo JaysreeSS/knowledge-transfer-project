@@ -92,7 +92,7 @@ export default function ICRDashboard() {
     return (
         <div className="px-4 sm:px-8 md:px-12 py-6 space-y-5 max-w-7xl mx-auto animate-in fade-in duration-700 transition-colors">
             <header className="space-y-1">
-                <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100 tracking-tight transition-colors">Dashboard</h1>
+                <h1 className="text-2xl font-semibold text-slate-900 dark:text-slate-100 tracking-tight transition-colors">Dashboard</h1>
                 <p className="text-slate-500 dark:text-slate-400 text-sm font-medium leading-relaxed max-w-lg transition-colors">Overview of your knowledge transfer responsibilities and learning paths.</p>
             </header>
 
@@ -167,12 +167,12 @@ export default function ICRDashboard() {
                                         <div className="flex items-center gap-2 pt-2">
                                             <div className="flex -space-x-2">
                                                 {project.members && project.members.slice(0, 3).map((m, i) => (
-                                                    <div key={i} className="w-6 h-6 rounded-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-[10px] font-medium text-slate-600 dark:text-slate-400 shadow-sm transition-colors">
+                                                    <div key={i} className="w-6 h-6 rounded-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-xs font-medium text-slate-600 dark:text-slate-400 shadow-sm transition-colors">
                                                         {m.name.charAt(0)}
                                                     </div>
                                                 ))}
                                                 {project.members && project.members.length > 3 && (
-                                                    <div className="w-6 h-6 rounded-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-[9px] font-bold text-slate-400 dark:text-slate-500 shadow-sm transition-colors">
+                                                    <div className="w-6 h-6 rounded-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-[9px] font-semibold text-slate-400 dark:text-slate-500 shadow-sm transition-colors">
                                                         +{project.members.length - 3}
                                                     </div>
                                                 )}

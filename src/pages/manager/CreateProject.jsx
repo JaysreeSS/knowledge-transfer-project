@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from '@/components/ui/card';
-import { Check, ChevronRight, ChevronLeft, UserPlus, FileText, Trash2, ShieldCheck, UserCircle } from 'lucide-react';
+import { Check, ChevronRight, ChevronLeft, ArrowLeft, UserPlus, FileText, Trash2, ShieldCheck, UserCircle } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function CreateProject() {
@@ -22,12 +22,11 @@ export default function CreateProject() {
         name: '',
         description: '',
         deadline: '',
-        category: 'Development', // Default
         members: [], // { userId, ktRole, functionalRole }
         sections: [] // { id, title, contributorId }
     });
 
-    const categories = JSON.parse(localStorage.getItem('p_categories') || '["Development", "Design", "DevOps", "QA", "Management"]');
+
 
     // Auto-calculate deadline based on settings
     useEffect(() => {
@@ -105,10 +104,12 @@ export default function CreateProject() {
             <div className="flex items-center justify-between transition-colors">
                 <Button
                     variant="ghost"
+                    size="icon"
                     onClick={() => navigate('/manager/projects')}
-                    className="h-8 px-0 text-slate-500 dark:text-slate-400 hover:text-primary dark:hover:text-primary hover:bg-transparent font-medium text-sm tracking-button transition-colors"
+                    className="h-9 w-9 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 shadow-sm transition-all shrink-0"
+                    title="Back to projects"
                 >
-                    <ChevronLeft className="w-4 h-4 mr-1" /> Back to projects
+                    <ArrowLeft className="w-4 h-4 text-slate-600 dark:text-slate-400" />
                 </Button>
                 <div className="flex gap-2 transition-colors">
                     {[1, 2, 3].map(i => (
@@ -149,18 +150,6 @@ export default function CreateProject() {
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 transition-colors">
                             <div className="space-y-2 transition-colors">
-                                <Label className="text-xs font-medium uppercase tracking-label text-slate-500 dark:text-slate-400 transition-colors">Project category</Label>
-                                <select
-                                    className="w-full h-10 px-3 text-sm font-semibold border border-slate-200 dark:border-slate-800 rounded-lg bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-primary/20 transition-all outline-none"
-                                    value={formData.category}
-                                    onChange={e => setFormData({ ...formData, category: e.target.value })}
-                                >
-                                    {categories.map(cat => (
-                                        <option key={cat} value={cat} className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100">{cat}</option>
-                                    ))}
-                                </select>
-                            </div>
-                            <div className="space-y-2 transition-colors">
                                 <Label htmlFor="deadline" className="text-xs font-medium uppercase tracking-label text-slate-500 dark:text-slate-400 transition-colors">Target deadline</Label>
                                 <Input
                                     id="deadline"
@@ -200,11 +189,11 @@ export default function CreateProject() {
                                         className={`p-4 rounded-xl border transition-all cursor-pointer flex items-center gap-4 ${selected ? 'border-orange-500 dark:border-orange-600 bg-orange-50/40 dark:bg-orange-900/20 shadow-sm' : 'border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 hover:border-slate-200 dark:hover:border-slate-700'
                                             }`}
                                     >
-                                        <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm ${selected ? 'bg-orange-500 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-600'}`}>
+                                        <div className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold text-sm ${selected ? 'bg-orange-500 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-600'}`}>
                                             {u.name.charAt(0)}
                                         </div>
                                         <div className="flex-1 min-w-0 transition-colors">
-                                            <p className="text-sm font-bold text-slate-900 dark:text-slate-100 truncate transition-colors">{u.name}</p>
+                                            <p className="text-sm font-semibold text-slate-900 dark:text-slate-100 truncate transition-colors">{u.name}</p>
                                             <p className="text-xs font-medium uppercase tracking-label text-slate-400 dark:text-slate-500 transition-colors">{u.role}</p>
                                         </div>
                                         {selected && <Check className="w-4 h-4 text-orange-600 dark:text-orange-400 shrink-0 transition-colors" />}
@@ -216,14 +205,14 @@ export default function CreateProject() {
                         {formData.members.length > 0 && (
                             <div className="space-y-4 pt-8 border-t border-slate-100 dark:border-slate-800">
                                 <h3 className="text-xs font-medium uppercase tracking-label text-slate-400 dark:text-slate-500">Define kt responsibilities</h3>
-                                <div className="grid grid-cols-1 gap-3">
+                                <div className="grid grid-cols-1 gap-4">
                                     {formData.members.map(m => (
                                         <div key={m.userId} className="flex items-center justify-between p-4 bg-slate-50/50 dark:bg-slate-900/30 border border-slate-100 dark:border-slate-800 rounded-xl transition-colors">
-                                            <div className="flex items-center gap-3">
-                                                <div className="w-6 h-6 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-[10px] font-bold text-slate-600 dark:text-slate-400 transition-colors">
+                                            <div className="flex items-center gap-4">
+                                                <div className="w-6 h-6 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-xs font-semibold text-slate-600 dark:text-slate-400 transition-colors">
                                                     {m.name.charAt(0)}
                                                 </div>
-                                                <span className="font-bold text-sm text-slate-900 dark:text-slate-100">{m.name}</span>
+                                                <span className="font-semibold text-sm text-slate-900 dark:text-slate-100">{m.name}</span>
                                             </div>
                                             <div className="flex bg-white dark:bg-slate-900 p-1 rounded-lg border border-slate-200 dark:border-slate-800 shadow-sm transition-colors">
                                                 {['Initiator', 'Contributor', 'Receiver']
@@ -232,7 +221,7 @@ export default function CreateProject() {
                                                         <button
                                                             key={role}
                                                             onClick={() => updateMemberRole(m.userId, role)}
-                                                            className={`px-4 py-1.5 text-xs font-medium uppercase tracking-label rounded-md transition-all ${m.ktRole === role ? 'bg-orange-500 dark:bg-orange-600 text-white shadow-sm' : 'text-slate-400 dark:text-slate-600 hover:text-slate-600 dark:hover:text-slate-400'
+                                                            className={`px-4 py-2 text-xs font-medium uppercase tracking-label rounded-md transition-all ${m.ktRole === role ? 'bg-orange-500 dark:bg-orange-600 text-white shadow-sm' : 'text-slate-400 dark:text-slate-600 hover:text-slate-600 dark:hover:text-slate-400'
                                                                 }`}
                                                         >
                                                             {role}
@@ -278,7 +267,7 @@ export default function CreateProject() {
                                                 <div className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all ${selected ? 'bg-emerald-500 dark:bg-emerald-600 text-white shadow-sm' : 'bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-600'}`}>
                                                     <Check className="w-4 h-4" />
                                                 </div>
-                                                <span className="font-bold text-slate-900 dark:text-slate-100 transition-colors">{t.title}</span>
+                                                <span className="font-semibold text-slate-900 dark:text-slate-100 transition-colors">{t.title}</span>
                                             </div>
                                             {selected && <Trash2 onClick={(e) => { e.stopPropagation(); toggleSection(t); }} className="w-4 h-4 text-slate-300 dark:text-slate-600 cursor-pointer hover:text-red-500 dark:hover:text-red-400 transition-colors" />}
                                         </div>

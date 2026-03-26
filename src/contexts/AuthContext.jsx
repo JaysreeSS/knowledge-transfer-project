@@ -80,12 +80,12 @@ export const AuthProvider = ({ children }) => {
 
             // 2. Fallback: Try by username (which is the email) if ID lookup fails
             if (!data && email) {
-                console.log("[Auth] 2. Profile not found by UUID, trying by email/username lookup...", email);
+                console.log("[Auth] 2. Profile not found by UUID, trying by username lookup...", email);
                 const { data: byUsername, error: usernameError } = await withTimeout(
                     supabase
                         .from('users')
                         .select('*')
-                        .or(`username.eq."${email}",email.eq."${email}"`)
+                        .eq('username', email)
                         .maybeSingle()
                 );
 
@@ -140,23 +140,9 @@ export const AuthProvider = ({ children }) => {
             let emailToUse = username;
 
             if (!username.includes('@')) {
-                console.log("[Auth] Input appears to be a username. Looking up email...");
-                const { data: userRecord, error: lookupError } = await supabase
-                    .from('users')
-                    .select('email')
-                    .eq('username', username)
-                    .maybeSingle();
-
-                if (lookupError) {
-                    console.error("[Auth] Username lookup error:", lookupError);
-                }
-
-                if (userRecord && userRecord.email) {
-                    console.log("[Auth] Email found for username:", userRecord.email);
-                    emailToUse = userRecord.email;
-                } else {
-                    console.warn("[Auth] No email found for username. Attempting login as-is.");
-                }
+                console.log("[Auth] Input appears to be a username. Attempting direct login.");
+                // Note: If the email column is deleted, we expect users to log in with their email-formatted username.
+                // If the system still supports non-email usernames, a mapping table or different auth strategy would be needed.
             }
 
             const { data, error } = await supabase.auth.signInWithPassword({
