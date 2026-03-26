@@ -93,8 +93,8 @@ export default function ManagerDashboard() {
                                     <div key={i} className="group cursor-pointer p-4 border border-slate-100 dark:border-slate-800 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-900 transition-all flex flex-col justify-between" onClick={() => navigate(`/manager/projects/${proj.id}`)}>
                                         <div className="mb-4">
                                             <div className="flex justify-between items-start mb-2">
-                                                <h4 className="text-[15px] font-bold text-slate-900 dark:text-slate-100 group-hover:text-primary transition-colors truncate">{proj.name}</h4>
-                                                <span className={`text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded border ${(proj.status === 'Completed' || proj.status === 'Signed Off')
+                                                <h4 className="text-base font-semibold text-slate-900 dark:text-slate-100 group-hover:text-primary transition-colors truncate">{proj.name}</h4>
+                                                <span className={`text-xs font-semibold uppercase tracking-widest px-2 py-0.5 rounded border ${(proj.status === 'Completed' || proj.status === 'Signed Off')
                                                     ? 'bg-emerald-50 text-emerald-600 border-emerald-100 dark:bg-emerald-950/20 dark:text-emerald-400 dark:border-emerald-800'
                                                     : proj.status === 'In Progress'
                                                         ? 'bg-blue-50 text-blue-600 border-blue-100 dark:bg-blue-950/20 dark:text-blue-400 dark:border-blue-800'
@@ -106,7 +106,7 @@ export default function ManagerDashboard() {
                                             <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed">{proj.description}</p>
                                         </div>
                                         <div className="space-y-2 transition-colors">
-                                            <div className="flex justify-between text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 transition-colors">
+                                            <div className="flex justify-between text-xs font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-500 transition-colors">
                                                 <span>Progress</span>
                                                 <span className="text-slate-900 dark:text-slate-100 transition-colors">{proj.completion}%</span>
                                             </div>
@@ -119,7 +119,7 @@ export default function ManagerDashboard() {
                                         </div>
                                     </div>
                                 )) : (
-                                    <div className="col-span-full text-center py-20 text-slate-400 text-xs font-bold uppercase tracking-widest">
+                                    <div className="col-span-full text-center py-20 text-slate-400 text-xs font-semibold uppercase tracking-widest">
                                         No projects found.
                                     </div>
                                 )}

@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
+    ArrowLeft,
     ChevronLeft,
     CheckCircle2,
     AlertCircle,
@@ -133,14 +134,16 @@ export default function ManagerHandoverDetails() {
             <div className="flex items-center justify-between">
                 <Button
                     variant="ghost"
+                    size="icon"
                     onClick={() => navigate('/manager/my-handovers')}
-                    className="h-8 px-0 text-slate-500 dark:text-slate-400 hover:text-primary dark:hover:text-primary hover:bg-transparent font-semibold text-xs transition-colors"
+                    className="h-9 w-9 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 shadow-sm transition-all shrink-0 hidden md:flex"
+                    title="Back to Handovers"
                 >
-                    <ChevronLeft className="w-4 h-4 mr-1" /> Back to Handovers
+                    <ArrowLeft className="w-4 h-4 text-slate-600 dark:text-slate-400" />
                 </Button>
                 <div className="flex items-center gap-4">
                     <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{project.name}</p>
-                    <Badge variant="outline" className={`rounded-lg px-3 py-1 font-medium text-xs uppercase tracking-label border ${project.lifecycleMode === 'ACTIVE'
+                    <Badge variant="outline" className={`rounded-lg px-4 py-1 font-medium text-xs uppercase tracking-label border ${project.lifecycleMode === 'ACTIVE'
                         ? 'bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 border-indigo-100 dark:border-indigo-800'
                         : project.lifecycleMode === 'REVERSE_KT'
                             ? 'bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 border-amber-100 dark:border-amber-800'
@@ -148,7 +151,7 @@ export default function ManagerHandoverDetails() {
                         }`}>
                         {project.lifecycleMode}
                     </Badge>
-                    <Badge variant="outline" className={`rounded-lg px-3 py-1 font-medium text-xs uppercase tracking-label border ${(project.status === 'Completed' || project.status === 'Signed Off')
+                    <Badge variant="outline" className={`rounded-lg px-4 py-1 font-medium text-xs uppercase tracking-label border ${(project.status === 'Completed' || project.status === 'Signed Off')
                         ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 border-emerald-100 dark:border-emerald-800'
                         : project.status === 'In Progress'
                             ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 border-blue-100 dark:border-blue-800'
@@ -188,7 +191,7 @@ export default function ManagerHandoverDetails() {
                                                 {s.title}
                                             </h4>
                                             {isAssigned && (
-                                                <Badge className="bg-orange-50 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400 border border-orange-100 dark:border-orange-800 text-[8px] px-1.5 py-0 font-medium uppercase tracking-label pointer-events-none">
+                                                <Badge className="bg-orange-50 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400 border border-orange-100 dark:border-orange-800 text-[8px] px-2 py-0 font-medium uppercase tracking-label pointer-events-none">
                                                     You
                                                 </Badge>
                                             )}
@@ -220,8 +223,8 @@ export default function ManagerHandoverDetails() {
                                 })
                                 .map((m, idx) => (
                                     <div key={idx} className="flex items-center justify-between p-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-900/50 transition-colors border border-transparent hover:border-slate-100 dark:hover:border-slate-800">
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-900 flex items-center justify-center font-bold text-[10px] text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-800">
+                                        <div className="flex items-center gap-4">
+                                            <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-900 flex items-center justify-center font-semibold text-xs text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-800">
                                                 {m.name.charAt(0)}
                                             </div>
                                             <div>
@@ -243,7 +246,7 @@ export default function ManagerHandoverDetails() {
                                                 })()}
                                             </div>
                                         </div>
-                                        <Badge variant="outline" className={`text-[8px] px-1.5 py-0.5 font-medium uppercase tracking-label border transition-colors ${m.ktRole === 'Initiator' ? 'text-purple-600 bg-purple-50 dark:bg-purple-900/20 border-purple-100 dark:border-purple-800' :
+                                        <Badge variant="outline" className={`text-[8px] px-2 py-0.5 font-medium uppercase tracking-label border transition-colors ${m.ktRole === 'Initiator' ? 'text-purple-600 bg-purple-50 dark:bg-purple-900/20 border-purple-100 dark:border-purple-800' :
                                             m.ktRole === 'Receiver' ? 'text-orange-600 bg-orange-50 dark:bg-orange-900/20 border-orange-100 dark:border-orange-800' :
                                                 'text-blue-600 bg-blue-50 dark:bg-blue-900/20 border-blue-100 dark:border-blue-800'
                                             }`}>
@@ -268,7 +271,7 @@ export default function ManagerHandoverDetails() {
                                             {(() => {
                                                 const assignee = project.members.find(m => m.userId === section.contributorId);
                                                 if (!assignee) return (
-                                                    <div className="flex items-center gap-1.5 bg-slate-50 dark:bg-slate-900 px-2.5 py-1 rounded text-xs font-medium uppercase tracking-label text-slate-500 dark:text-slate-400 border border-slate-100 dark:border-slate-800/50">
+                                                    <div className="flex items-center gap-1.5 bg-slate-50 dark:bg-slate-900 px-2 py-1 rounded text-xs font-medium uppercase tracking-label text-slate-500 dark:text-slate-400 border border-slate-100 dark:border-slate-800/50">
                                                         <UserCircle className="w-3" />
                                                         Unassigned
                                                     </div>
@@ -280,7 +283,7 @@ export default function ManagerHandoverDetails() {
                                                     : 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 border-blue-100 dark:border-blue-800';
 
                                                 return (
-                                                    <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-medium uppercase tracking-label border ${colorClass}`}>
+                                                    <div className={`flex items-center gap-1.5 px-2 py-1 rounded text-xs font-medium uppercase tracking-label border ${colorClass}`}>
                                                         <UserCircle className="w-3 h-3" />
                                                         {assignee.ktRole}: {assignee.name}
                                                     </div>
@@ -292,11 +295,11 @@ export default function ManagerHandoverDetails() {
                                         </div>
                                     </div>
 
-                                    <div className="flex items-center gap-3">
+                                    <div className="flex items-center gap-4">
                                         {!isReadOnly && isContributor && !isEditing && (
                                             <Button
                                                 onClick={() => setIsEditing(true)}
-                                                className="bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 hover:bg-slate-800 dark:hover:bg-slate-200 rounded-lg h-9 px-4 font-bold uppercase tracking-widest text-[10px] shadow-sm transition-all"
+                                                className="bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 hover:bg-slate-800 dark:hover:bg-slate-200 rounded-lg h-9 px-4 font-semibold uppercase tracking-widest text-xs shadow-sm transition-all"
                                             >
                                                 Edit Content
                                             </Button>
@@ -306,13 +309,13 @@ export default function ManagerHandoverDetails() {
                                                 <Button
                                                     variant="ghost"
                                                     onClick={() => { setIsEditing(false); setContent(section.content || ''); }}
-                                                    className="h-9 px-4 text-slate-400 dark:text-slate-500 font-bold uppercase tracking-widest text-[10px] hover:text-slate-600 dark:hover:text-slate-300"
+                                                    className="h-9 px-4 text-slate-400 dark:text-slate-500 font-semibold uppercase tracking-widest text-xs hover:text-slate-600 dark:hover:text-slate-300"
                                                 >
                                                     Cancel
                                                 </Button>
                                                 <Button
                                                     onClick={handleSave}
-                                                    className="bg-primary text-white hover:bg-primary/90 rounded-lg h-9 px-4 font-bold uppercase tracking-widest text-[10px] shadow-sm"
+                                                    className="bg-primary text-white hover:bg-primary/90 rounded-lg h-9 px-4 font-semibold uppercase tracking-widest text-xs shadow-sm"
                                                 >
                                                     <Save className="w-3.5 h-3.5 mr-2" /> Save Changes
                                                 </Button>
@@ -347,7 +350,7 @@ export default function ManagerHandoverDetails() {
                                             ) : (
                                                 <div className="flex flex-col items-center justify-center h-80 text-slate-300 dark:text-slate-700 border border-dashed border-slate-200 dark:border-slate-800 rounded-xl bg-slate-50/50 dark:bg-slate-900/30">
                                                     <FileText className="w-12 h-12 mb-4 opacity-30" />
-                                                    <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">No documentation drafted yet</p>
+                                                    <p className="text-xs font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-500">No documentation drafted yet</p>
                                                 </div>
                                             )}
                                         </div>
@@ -360,23 +363,23 @@ export default function ManagerHandoverDetails() {
                                     {/* Attachments */}
                                     <Card className="border-slate-200 dark:border-slate-800 shadow-sm rounded-xl bg-white dark:bg-slate-800/50 backdrop-blur-sm overflow-hidden shrink-0">
                                         <CardHeader className="p-4 border-b border-slate-50 dark:border-slate-800 bg-slate-50/30 dark:bg-slate-900/30 flex flex-row justify-between items-center">
-                                            <CardTitle className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest flex items-center gap-2">
+                                            <CardTitle className="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-widest flex items-center gap-2">
                                                 <Paperclip className="w-3.5 h-3.5" /> Attachments
                                             </CardTitle>
                                         </CardHeader>
                                         <CardContent className="p-4 space-y-2 max-h-[220px] overflow-y-auto custom-scrollbar">
                                             {(section.attachments || []).length === 0 ? (
-                                                <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase text-center py-8 border border-dashed border-slate-100 dark:border-slate-800 rounded-xl bg-slate-50/50 dark:bg-slate-900/30">No files attached</p>
+                                                <p className="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase text-center py-8 border border-dashed border-slate-100 dark:border-slate-800 rounded-xl bg-slate-50/50 dark:bg-slate-900/30">No files attached</p>
                                             ) : (
                                                 (section.attachments || []).map((att) => (
                                                     <div key={att.id} className="flex items-center justify-between p-3 bg-slate-50/50 dark:bg-slate-900/30 border border-slate-100 dark:border-slate-800/50 rounded-xl group hover:border-slate-200 dark:hover:border-slate-700 transition-all">
-                                                        <div className="flex items-center gap-3 overflow-hidden">
+                                                        <div className="flex items-center gap-4 overflow-hidden">
                                                             <div className="w-8 h-8 rounded-lg bg-white dark:bg-slate-900 flex items-center justify-center border border-slate-200 dark:border-slate-800 text-slate-400 dark:text-slate-500 shadow-sm">
                                                                 <FileText className="w-4 h-4" />
                                                             </div>
                                                             <div className="overflow-hidden">
-                                                                <p className="text-[11px] font-bold text-slate-700 dark:text-slate-200 truncate tracking-tight">{att.fileName}</p>
-                                                                <p className="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">{att.fileSize}</p>
+                                                                <p className="text-xs font-semibold text-slate-700 dark:text-slate-200 truncate tracking-tight">{att.fileName}</p>
+                                                                <p className="text-[9px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-widest">{att.fileSize}</p>
                                                             </div>
                                                         </div>
                                                         <div className="flex items-center gap-1">
@@ -413,7 +416,7 @@ export default function ManagerHandoverDetails() {
                                                     <Label htmlFor="file-upload" className="cursor-pointer">
                                                         <div className="w-full h-10 border border-dashed border-slate-200 dark:border-slate-800 rounded-xl flex items-center justify-center gap-2 hover:border-primary/50 hover:bg-slate-50 dark:hover:bg-slate-900 transition-all group">
                                                             <Paperclip className="w-3.5 h-3.5 text-slate-400 group-hover:text-primary transition-colors" />
-                                                            <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 group-hover:text-primary transition-colors">Add Attachment</span>
+                                                            <span className="text-xs font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-500 group-hover:text-primary transition-colors">Add Attachment</span>
                                                         </div>
                                                         <input id="file-upload" type="file" className="hidden" onChange={handleFileUpload} />
                                                     </Label>
@@ -425,23 +428,23 @@ export default function ManagerHandoverDetails() {
                                     {/* Reference Links */}
                                     <Card className="border-slate-200 dark:border-slate-800 shadow-sm rounded-xl bg-white dark:bg-slate-800/50 backdrop-blur-sm overflow-hidden shrink-0">
                                         <CardHeader className="p-4 border-b border-slate-50 dark:border-slate-800 bg-slate-50/30 dark:bg-slate-900/30 flex flex-row justify-between items-center">
-                                            <CardTitle className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest flex items-center gap-2">
+                                            <CardTitle className="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-widest flex items-center gap-2">
                                                 <LinkIcon className="w-3.5 h-3.5" /> Reference Links
                                             </CardTitle>
                                         </CardHeader>
                                         <CardContent className="p-4 space-y-2 max-h-[300px] overflow-y-auto custom-scrollbar">
                                             {(section.links || []).length === 0 ? (
-                                                <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase text-center py-8 border border-dashed border-slate-100 dark:border-slate-800 rounded-xl bg-slate-50/50 dark:bg-slate-900/30">No links added</p>
+                                                <p className="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase text-center py-8 border border-dashed border-slate-100 dark:border-slate-800 rounded-xl bg-slate-50/50 dark:bg-slate-900/30">No links added</p>
                                             ) : (
                                                 (section.links || []).map((link) => (
                                                     <div key={link.id} className="flex items-center justify-between p-3 bg-slate-50/50 dark:bg-slate-900/30 border border-slate-100 dark:border-slate-800/50 rounded-xl group hover:border-slate-200 dark:hover:border-slate-700 transition-all">
-                                                        <div className="flex items-center gap-3 overflow-hidden">
+                                                        <div className="flex items-center gap-4 overflow-hidden">
                                                             <div className="w-8 h-8 rounded-lg bg-white dark:bg-slate-900 flex items-center justify-center border border-slate-200 dark:border-slate-800 text-slate-400 dark:text-slate-500 shadow-sm">
                                                                 <LinkIcon className="w-4 h-4" />
                                                             </div>
                                                             <div className="overflow-hidden">
-                                                                <p className="text-[11px] font-bold text-slate-700 dark:text-slate-200 truncate tracking-tight">{link.title}</p>
-                                                                <p className="text-[9px] font-bold text-primary dark:text-primary/90 truncate hover:underline cursor-pointer transition-colors" onClick={() => window.open(link.url, '_blank')}>{link.url}</p>
+                                                                <p className="text-xs font-semibold text-slate-700 dark:text-slate-200 truncate tracking-tight">{link.title}</p>
+                                                                <p className="text-[9px] font-semibold text-primary dark:text-primary/90 truncate hover:underline cursor-pointer transition-colors" onClick={() => window.open(link.url, '_blank')}>{link.url}</p>
                                                             </div>
                                                         </div>
                                                         <div className="flex items-center gap-1">
@@ -471,7 +474,7 @@ export default function ManagerHandoverDetails() {
                                                     {showLinkInput ? (
                                                         <div className="p-3 border border-primary/20 dark:border-primary/30 rounded-xl bg-primary/5 dark:bg-primary/10 space-y-3 animate-in slide-in-from-top-2 duration-300">
                                                             <div className="space-y-1">
-                                                                <Label className="text-[9px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Link Title</Label>
+                                                                <Label className="text-[9px] font-semibold uppercase tracking-widest text-slate-500 dark:text-slate-400">Link Title</Label>
                                                                 <Input
                                                                     placeholder="e.g. YouTube Tutorial"
                                                                     value={newLink.title}
@@ -480,7 +483,7 @@ export default function ManagerHandoverDetails() {
                                                                 />
                                                             </div>
                                                             <div className="space-y-1">
-                                                                <Label className="text-[9px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">URL</Label>
+                                                                <Label className="text-[9px] font-semibold uppercase tracking-widest text-slate-500 dark:text-slate-400">URL</Label>
                                                                 <Input
                                                                     placeholder="e.g. https://youtube.com/..."
                                                                     value={newLink.url}
@@ -489,8 +492,8 @@ export default function ManagerHandoverDetails() {
                                                                 />
                                                             </div>
                                                             <div className="flex gap-2">
-                                                                <Button size="sm" className="h-8 text-[9px] font-bold uppercase tracking-widest flex-1" onClick={handleAddLink}>Add Link</Button>
-                                                                <Button size="sm" variant="ghost" className="h-8 text-[9px] font-bold uppercase tracking-widest flex-1 text-slate-500 dark:text-slate-400" onClick={() => setShowLinkInput(false)}>Cancel</Button>
+                                                                <Button size="sm" className="h-8 text-[9px] font-semibold uppercase tracking-widest flex-1" onClick={handleAddLink}>Add Link</Button>
+                                                                <Button size="sm" variant="ghost" className="h-8 text-[9px] font-semibold uppercase tracking-widest flex-1 text-slate-500 dark:text-slate-400" onClick={() => setShowLinkInput(false)}>Cancel</Button>
                                                             </div>
                                                         </div>
                                                     ) : (
@@ -499,7 +502,7 @@ export default function ManagerHandoverDetails() {
                                                             className="w-full h-10 border border-dashed border-slate-200 dark:border-slate-800 rounded-xl flex items-center justify-center gap-2 hover:border-primary/50 hover:bg-slate-50 dark:hover:bg-slate-900 transition-all group cursor-pointer"
                                                         >
                                                             <LinkIcon className="w-3.5 h-3.5 text-slate-400 group-hover:text-primary transition-colors" />
-                                                            <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 group-hover:text-primary transition-colors">Add Reference Link</span>
+                                                            <span className="text-xs font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-500 group-hover:text-primary transition-colors">Add Reference Link</span>
                                                         </div>
                                                     )}
                                                 </div>
@@ -511,7 +514,7 @@ export default function ManagerHandoverDetails() {
                                 {/* Discussion */}
                                 <Card className="border-slate-200 dark:border-slate-800 shadow-sm rounded-xl bg-white dark:bg-slate-800/50 backdrop-blur-sm overflow-hidden flex flex-col h-full">
                                     <CardHeader className="p-4 border-b border-slate-50 dark:border-slate-800 bg-slate-50/30 dark:bg-slate-900/30 flex flex-row justify-between items-center">
-                                        <CardTitle className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest flex items-center gap-2">
+                                        <CardTitle className="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-widest flex items-center gap-2">
                                             <MessageSquare className="w-3.5 h-3.5" /> Discussion
                                         </CardTitle>
                                     </CardHeader>
@@ -520,14 +523,14 @@ export default function ManagerHandoverDetails() {
                                             {(section.comments || []).length === 0 ? (
                                                 <div className="text-center py-10 flex flex-col items-center justify-center h-full gap-2 opacity-50">
                                                     <MessageSquare className="w-6 h-6 text-slate-200 dark:text-slate-700" />
-                                                    <p className="text-[10px] font-bold text-slate-300 dark:text-slate-600 uppercase tracking-widest">No conversation yet</p>
+                                                    <p className="text-xs font-semibold text-slate-300 dark:text-slate-600 uppercase tracking-widest">No conversation yet</p>
                                                 </div>
                                             ) : (
                                                 section.comments.map((c, idx) => (
                                                     <div key={idx} className="flex flex-col gap-1.5 bg-slate-50/50 dark:bg-slate-900/30 p-3 rounded-xl border border-slate-100 dark:border-slate-800/50">
                                                         <div className="flex justify-between items-center">
-                                                            <span className="text-[10px] font-bold uppercase text-primary dark:text-primary/90 tracking-widest">{c.userName}</span>
-                                                            <span className="text-[8px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-widest">{new Date(c.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                                                            <span className="text-xs font-semibold uppercase text-primary dark:text-primary/90 tracking-widest">{c.userName}</span>
+                                                            <span className="text-[8px] text-slate-400 dark:text-slate-500 font-semibold uppercase tracking-widest">{new Date(c.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                                                         </div>
                                                         <p className="text-xs text-slate-600 dark:text-slate-300 font-medium leading-relaxed">{c.text}</p>
                                                     </div>
@@ -559,7 +562,7 @@ export default function ManagerHandoverDetails() {
                     ) : (
                         <div className="flex flex-col items-center justify-center h-full text-slate-300 dark:text-slate-700 space-y-4">
                             <Layers className="w-16 h-16 opacity-10" />
-                            <p className="font-bold uppercase tracking-widest text-[11px] text-slate-400 dark:text-slate-500">Select a section to view details</p>
+                            <p className="font-semibold uppercase tracking-widest text-xs text-slate-400 dark:text-slate-500">Select a section to view details</p>
                         </div>
                     )}
                 </div>

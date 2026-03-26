@@ -119,7 +119,7 @@ export default function Landing() {
             <div className="z-10 w-full max-w-sm px-4 flex flex-col items-center animate-in fade-in zoom-in-95 duration-700">
 
                 {/* Logo & Title */}
-                <header className="flex items-center justify-center gap-3 mb-10">
+                <header className="flex items-center justify-center gap-4 mb-10">
                     <div className="transition-transform duration-500 hover:scale-105">
                         <img
                             src={logoSmall}
@@ -127,7 +127,7 @@ export default function Landing() {
                             className="h-8 w-auto brightness-0 invert opacity-90"
                         />
                     </div>
-                    <h1 className="text-2xl font-bold tracking-tight text-white">
+                    <h1 className="text-2xl font-semibold tracking-tight text-white">
                         {(() => {
                             const portalName = localStorage.getItem('s_portal_name') || 'Knowledge Transfer';
                             const words = portalName.split(' ');

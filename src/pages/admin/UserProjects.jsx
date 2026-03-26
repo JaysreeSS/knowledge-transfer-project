@@ -5,12 +5,15 @@ import { useProjects } from '../../contexts/ProjectContext.jsx';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, FolderKanban, Zap, CheckCircle2, Calendar } from 'lucide-react';
+import { ArrowLeft, FolderKanban, Zap, CheckCircle2, Calendar, ChevronRight } from 'lucide-react';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { getAvatarUrl } from '@/lib/utils';
 
 export default function UserProjects() {
     const { userId } = useParams();
     const navigate = useNavigate();
-    const { users } = useAdmin();
+    const { users, settings } = useAdmin();
+    const themeColor = settings?.theme_color?.replace('#', '') || localStorage.getItem('a_theme_color')?.replace('#', '') || '7c3aed';
     const { projects } = useProjects();
 
     const targetUser = users.find(u => u.id === userId);
@@ -18,7 +21,7 @@ export default function UserProjects() {
     if (!targetUser) {
         return (
             <div className="p-12 text-center space-y-4">
-                <h2 className="text-xl font-bold text-slate-800 dark:text-slate-200">User not found</h2>
+                <h2 className="text-xl font-semibold text-slate-800 dark:text-slate-200">User not found</h2>
                 <Button onClick={() => navigate('/admin/users')}>Back to Users</Button>
             </div>
         );
@@ -87,14 +90,15 @@ export default function UserProjects() {
                     variant="ghost"
                     size="icon"
                     onClick={() => navigate('/admin/users')}
-                    className="rounded-xl border border-slate-200 dark:border-slate-800 hover:bg-white dark:hover:bg-slate-800 shadow-sm transition-colors"
+                    className="h-9 w-9 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 shadow-sm transition-all shrink-0 hidden md:flex"
+                    title="Back to Users"
                 >
                     <ArrowLeft className="w-4 h-4 text-slate-600 dark:text-slate-400" />
                 </Button>
                 <div>
-                    <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100 tracking-tight">Project Engagements</h1>
+                    <h1 className="text-2xl font-semibold text-slate-900 dark:text-slate-100 tracking-tight">Project Engagements</h1>
                     <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mt-1">
-                        Viewing all projects for <span className="text-primary font-bold">{targetUser.name}</span>
+                        Viewing all projects for <span className="text-primary font-semibold">{targetUser.name}</span>
                     </p>
                 </div>
             </div>
@@ -106,23 +110,26 @@ export default function UserProjects() {
                         <div className="h-2 bg-primary"></div>
                         <CardHeader className="pb-4">
                             <div className="flex items-center gap-4">
-                                <div className="w-12 h-12 rounded-2xl bg-primary/10 dark:bg-primary/20 flex items-center justify-center text-primary dark:text-primary border border-primary/20 dark:border-primary/30 transition-colors">
-                                    <span className="text-lg font-bold uppercase">{targetUser.name?.substring(0, 2)}</span>
-                                </div>
+                                <Avatar className="w-12 h-12 rounded-2xl border border-primary/20 dark:border-primary/30 shadow-sm transition-colors shrink-0">
+                                    <AvatarImage src={getAvatarUrl(targetUser.avatar_url || targetUser.name, themeColor)} alt={targetUser.name} />
+                                    <AvatarFallback className="bg-primary/10 dark:bg-primary/20 text-primary dark:text-primary font-semibold text-lg uppercase transition-colors">
+                                        {targetUser.name?.substring(0, 2) || 'US'}
+                                    </AvatarFallback>
+                                </Avatar>
                                 <div>
-                                    <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100 leading-tight transition-colors">{targetUser.name}</h2>
-                                    <Badge variant="soft" className="mt-1 lowercase text-[11px] font-bold tracking-wider dark:bg-slate-900/50 dark:text-slate-400 dark:border-slate-800 transition-colors">{targetUser.role}</Badge>
+                                    <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100 leading-tight transition-colors">{targetUser.name}</h2>
+                                    <Badge variant="soft" className="mt-1 normal-case text-xs font-semibold tracking-wider dark:bg-slate-900/50 dark:text-slate-400 dark:border-slate-800 transition-colors">{targetUser.role}</Badge>
                                 </div>
                             </div>
                         </CardHeader>
                         <CardContent className="space-y-4 pt-0">
                             <div className="p-3 bg-slate-50 dark:bg-slate-900/50 rounded-xl border border-slate-100 dark:border-slate-800/50 space-y-1">
-                                <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Username</p>
-                                <p className="text-sm font-bold text-slate-700 dark:text-slate-200">{targetUser.username}</p>
+                                <p className="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Username</p>
+                                <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">{targetUser.username}</p>
                             </div>
                             <div className="p-3 bg-slate-50 dark:bg-slate-900/50 rounded-xl border border-slate-100 dark:border-slate-800/50 space-y-1">
-                                <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Engagement Count</p>
-                                <p className="text-sm font-bold text-slate-700 dark:text-slate-200">{userProjects.length} Projects Total</p>
+                                <p className="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Engagement Count</p>
+                                <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">{userProjects.length} Projects Total</p>
                             </div>
                         </CardContent>
                     </Card>
@@ -144,32 +151,32 @@ export default function UserProjects() {
                                         </div>
                                         <div className="space-y-1 flex-1 min-w-0">
                                             <div className="flex items-center gap-2 flex-wrap">
-                                                <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100 truncate tracking-tight">{project.name}</h3>
-                                                <Badge variant={project.status === 'Completed' ? 'success' : 'blue'} className="text-[9px] h-4 font-bold uppercase tracking-wider px-1.5">
+                                                <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100 truncate tracking-tight">{project.name}</h3>
+                                                <Badge variant={project.status === 'Completed' ? 'success' : 'blue'} className="text-[9px] h-4 font-semibold normal-case tracking-wider px-2">
                                                     {project.status === 'Completed' ? 'Signed Off' : project.status}
                                                 </Badge>
                                             </div>
-                                            <div className="flex items-center gap-3">
-                                                <div className="flex items-center gap-1 text-[11px] font-medium text-slate-500 dark:text-slate-400">
+                                            <div className="flex items-center gap-4">
+                                                <div className="flex items-center gap-1 text-xs font-medium text-slate-500 dark:text-slate-400">
                                                     <Calendar className="w-3 h-3" />
-                                                    {project.created_at ? new Date(project.created_at).toLocaleDateString() : 'N/A'}
+                                                    <span className="opacity-70 mr-0.5">Created:</span>
+                                                    {project.created_at || project.createdAt ? new Date(project.created_at || project.createdAt).toLocaleDateString() : '---'}
                                                 </div>
                                                 <span className="text-slate-200 dark:text-slate-700 text-xs">•</span>
-                                                <div className="flex items-center gap-1 text-[11px] font-bold text-primary dark:text-primary transition-colors">
-                                                    <Zap className="w-3 h-3" />
+                                                <div className="flex items-center gap-1 text-xs font-semibold text-primary dark:text-primary transition-colors">
                                                     {project.userKtRole}
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
 
-                                    <div className="flex items-center gap-6 shrink-0 bg-slate-50/50 dark:bg-slate-900/50 md:bg-transparent p-3 md:p-0 rounded-xl md:rounded-none">
-                                        <div className="flex flex-col items-end gap-1.5 min-w-[120px]">
+                                    <div className="flex items-center gap-6 shrink-0 bg-slate-50/50 dark:bg-slate-900/50 md:bg-transparent p-3 md:p-0 rounded-xl md:rounded-none w-full md:w-auto">
+                                        <div className="flex flex-col items-end gap-1.5 flex-1 md:min-w-[120px]">
                                             <div className="flex items-center justify-between w-full">
-                                                <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Progress</span>
-                                                <span className="text-xs font-bold text-slate-900 dark:text-slate-100">{project.userProgress}%</span>
+                                                <span className="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-widest leading-none">Progress</span>
+                                                <span className="text-xs font-semibold text-slate-900 dark:text-slate-100 leading-none">{project.userProgress}%</span>
                                             </div>
-                                            <div className="w-32 h-1.5 bg-slate-100 dark:bg-slate-900 rounded-full overflow-hidden">
+                                            <div className="w-full md:w-32 h-1.5 bg-slate-100 dark:bg-slate-900 rounded-full overflow-hidden">
                                                 <div
                                                     className={`h-full transition-all duration-1000 ${project.userProgress === 100 ? 'bg-emerald-500' : 'bg-primary'}`}
                                                     style={{ width: `${project.userProgress}%` }}
@@ -181,7 +188,7 @@ export default function UserProjects() {
                                             variant="ghost"
                                             className="h-8 w-8 p-0 rounded-lg hover:bg-primary/5 dark:hover:bg-primary/20 hover:text-primary dark:hover:text-primary transition-all border border-transparent hover:border-primary/10 dark:hover:border-primary/20 dark:text-slate-400"
                                         >
-                                            <ArrowLeft className="w-4 h-4 rotate-180" />
+                                            <ChevronRight className="w-4 h-4" />
                                         </Button>
                                     </div>
                                 </div>
@@ -193,7 +200,7 @@ export default function UserProjects() {
                                 <FolderKanban className="w-10 h-10 text-slate-200 dark:text-slate-600" />
                             </div>
                             <div>
-                                <h3 className="text-lg font-bold text-slate-800 dark:text-slate-200">No project engagements</h3>
+                                <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-200">No project engagements</h3>
                                 <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mt-1">This user hasn't been assigned to any projects yet.</p>
                             </div>
                         </div>

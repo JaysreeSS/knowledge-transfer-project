@@ -55,7 +55,7 @@ export default function AllProjects() {
                             Manage and track every project handover.
                         </p>
                     </div>
-                    <div className="flex items-center gap-3 transition-colors">
+                    <div className="flex items-center gap-4 transition-colors">
                         <div className="relative w-72 group transition-colors">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-primary transition-colors" />
                             <Input
@@ -81,8 +81,8 @@ export default function AllProjects() {
                         </Card>
                     ) : (
                         <div className="space-y-6">
-                            <div className="bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 shadow-sm rounded-xl overflow-hidden backdrop-blur-sm">
-                                <table className="w-full text-left border-collapse">
+                            <div className="overflow-x-auto scrollbar-hide">
+                                <table className="w-full text-left border-collapse min-w-[800px]">
                                     <thead>
                                         <tr className="bg-slate-50/50 dark:bg-slate-900/50 border-b border-slate-100 dark:border-slate-800">
                                             <th className="p-4 text-xs font-medium uppercase tracking-label text-slate-500 dark:text-slate-400">Project name</th>
@@ -103,7 +103,7 @@ export default function AllProjects() {
                                                         {p.name}
                                                     </td>
                                                     <td className="p-4">
-                                                        <div className={`px-2.5 py-1 rounded text-xs font-medium uppercase tracking-label w-fit border ${(displayStatus === 'Completed' || displayStatus === 'Signed Off')
+                                                        <div className={`px-2 py-1 rounded text-xs font-medium uppercase tracking-label w-fit border ${(displayStatus === 'Completed' || displayStatus === 'Signed Off')
                                                             ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 border-emerald-100 dark:border-emerald-800'
                                                             : displayStatus === 'In Progress'
                                                                 ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 border-blue-100 dark:border-blue-800'
@@ -123,7 +123,7 @@ export default function AllProjects() {
                                                                     style={{ width: `${displayCompletion}%` }}
                                                                 />
                                                             </div>
-                                                            <span className="text-[10px] font-bold text-slate-700 dark:text-slate-300 min-w-[35px] text-right">{displayCompletion}%</span>
+                                                            <span className="text-xs font-semibold text-slate-700 dark:text-slate-300 min-w-[35px] text-right">{displayCompletion}%</span>
                                                         </div>
                                                     </td>
                                                     <td className="p-4 text-right">
@@ -156,7 +156,7 @@ export default function AllProjects() {
                                             variant={currentPage === i + 1 ? "default" : "outline"}
                                             size="sm"
                                             onClick={() => setCurrentPage(i + 1)}
-                                            className={`rounded-lg h-9 w-9 p-0 font-bold text-[11px] transition-all ${currentPage === i + 1 ? 'shadow-sm' : 'border-slate-200 dark:border-slate-800 dark:bg-slate-900 text-slate-500 dark:text-slate-400 translate-colors'
+                                            className={`rounded-lg h-9 w-9 p-0 font-semibold text-xs transition-all ${currentPage === i + 1 ? 'shadow-sm' : 'border-slate-200 dark:border-slate-800 dark:bg-slate-900 text-slate-500 dark:text-slate-400 translate-colors'
                                                 }`}
                                         >
                                             {i + 1}

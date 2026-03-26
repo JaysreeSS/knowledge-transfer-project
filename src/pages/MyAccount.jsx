@@ -8,9 +8,12 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { getAvatarUrl } from '../lib/utils';
 import { User, Mail, Shield, UserCircle, Edit2, Check, X, Lock, KeyRound } from 'lucide-react';
 import { toast } from 'sonner';
+import { useAdmin } from '../contexts/AdminContext';
 
 export default function MyAccount() {
     const { user, updateProfile } = useAuth();
+    const { settings } = useAdmin();
+    const themeColor = settings?.theme_color?.replace('#', '') || '7c3aed';
     const [isEditingName, setIsEditingName] = useState(false);
     const [newName, setNewName] = useState(user?.name || '');
 
@@ -98,12 +101,12 @@ export default function MyAccount() {
                 <div className="w-full md:w-80 space-y-6 shrink-0">
                     {/* Profile Card */}
                     <Card className="shadow-xl border-slate-100 dark:border-slate-800 overflow-hidden relative group bg-white dark:bg-slate-800/50 backdrop-blur-sm transition-colors">
-                        <div className="h-24 bg-gradient-to-br from-purple-500 to-indigo-600"></div>
+                        <div className="h-24 bg-gradient-to-br from-primary to-primary/80"></div>
                         <CardContent className="pt-0 -mt-12 flex flex-col items-center pb-8">
                             <div className="relative cursor-pointer group/avatar transition-colors" onClick={() => setIsSelectingAvatar(!isSelectingAvatar)}>
-                                <Avatar className="w-24 h-24 border-4 border-white dark:border-slate-800 shadow-lg ring-2 ring-purple-100 dark:ring-purple-900/30 ring-offset-2 transition-transform group-hover/avatar:scale-105">
-                                    <AvatarImage src={getAvatarUrl(user?.avatar_url || user?.name)} />
-                                    <AvatarFallback className="bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 text-xl font-bold transition-colors">
+                                <Avatar className="w-24 h-24 border-4 border-white dark:border-slate-800 shadow-lg ring-2 ring-primary/10 dark:ring-primary/30 ring-offset-2 transition-transform group-hover/avatar:scale-105">
+                                    <AvatarImage src={getAvatarUrl(user?.avatar_url || user?.name, themeColor)} />
+                                    <AvatarFallback className="bg-primary/5 dark:bg-primary/20 text-primary text-xl font-semibold transition-colors">
                                         {user?.name?.substring(0, 2).toUpperCase()}
                                     </AvatarFallback>
                                 </Avatar>
@@ -114,8 +117,8 @@ export default function MyAccount() {
 
                             {isSelectingAvatar && (
                                 <div className="mt-6 p-4 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl shadow-xl w-full animate-in zoom-in-95 duration-200">
-                                    <div className="flex items-center justify-between mb-3">
-                                        <h4 className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">Professional Reactions</h4>
+                                    <div className="flex items-center justify-between mb-4">
+                                        <h4 className="text-xs font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-500">Professional Reactions</h4>
                                         <button onClick={() => setIsSelectingAvatar(false)} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors">
                                             <X size={12} />
                                         </button>
@@ -126,10 +129,10 @@ export default function MyAccount() {
                                                 key={item.seed}
                                                 onClick={() => handleUpdateAvatar(item.seed)}
                                                 title={item.label}
-                                                className={`relative w-full aspect-square rounded-xl border-2 transition-all p-1.5 group/item hover:border-purple-500 ${user?.avatar_url === item.seed ? 'border-purple-500 dark:border-purple-500 bg-purple-50 dark:bg-purple-900/20 ring-2 ring-purple-100 dark:ring-purple-900/30' : 'border-slate-50 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800'}`}
+                                                className={`relative w-full aspect-square rounded-xl border-2 transition-all p-1.5 group/item hover:border-primary ${user?.avatar_url === item.seed ? 'border-primary dark:border-primary bg-primary/5 dark:bg-primary/20 ring-2 ring-primary/10' : 'border-slate-50 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800'}`}
                                             >
-                                                <img src={getAvatarUrl(item.seed)} alt={item.label} className="w-full h-full transform transition-transform group-hover/item:scale-110" />
-                                                <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 bg-slate-900 dark:bg-slate-700 text-white text-[8px] font-bold px-1.5 py-0.5 rounded opacity-0 group-hover/item:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
+                                                <img src={getAvatarUrl(item.seed, themeColor)} alt={item.label} className="w-full h-full transform transition-transform group-hover/item:scale-110" />
+                                                <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 bg-slate-900 dark:bg-slate-700 text-white text-[8px] font-semibold px-2 py-0.5 rounded opacity-0 group-hover/item:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
                                                     {item.label}
                                                 </div>
                                             </button>
@@ -138,9 +141,9 @@ export default function MyAccount() {
                                 </div>
                             )}
 
-                            <div className="w-full mt-8 flex items-center justify-center gap-3 text-slate-600 dark:text-slate-400 p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800 shadow-inner group transition-all hover:bg-white dark:hover:bg-slate-900 hover:border-purple-200 dark:hover:border-purple-900/50">
-                                <UserCircle size={16} className="text-purple-500 group-hover:scale-110 transition-transform" />
-                                <span className="text-[11px] font-bold uppercase tracking-[0.15em] dark:text-slate-300 transition-colors">UID: {user?.id?.substring(0, 8)}</span>
+                            <div className="w-full mt-8 flex items-center justify-center gap-4 text-slate-600 dark:text-slate-400 p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800 shadow-inner group transition-all hover:bg-white dark:hover:bg-slate-900 hover:border-primary/20 dark:hover:border-primary/30">
+                                <UserCircle size={16} className="text-primary group-hover:scale-110 transition-transform" />
+                                <span className="text-xs font-semibold uppercase tracking-[0.15em] dark:text-slate-300 transition-colors">UID: {user?.id?.substring(0, 8)}</span>
                             </div>
                         </CardContent>
                     </Card>
@@ -148,8 +151,8 @@ export default function MyAccount() {
                     {/* Security Settings - Moved from right column */}
                     <Card className="shadow-xl border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-800/50 backdrop-blur-sm transition-colors">
                         <CardHeader className="bg-slate-50/30 dark:bg-slate-900/50 border-b border-slate-50 dark:border-slate-800">
-                            <CardTitle className="text-lg font-bold flex items-center gap-2 dark:text-slate-100">
-                                <Lock className="text-purple-500 w-5 h-5" /> Security settings
+                            <CardTitle className="text-lg font-semibold flex items-center gap-2 dark:text-slate-100">
+                                <Shield className="text-primary w-5 h-5" /> Security settings
                             </CardTitle>
                             <CardDescription className="text-xs font-medium dark:text-slate-400">Update password to keep your account secure.</CardDescription>
                         </CardHeader>
@@ -158,7 +161,7 @@ export default function MyAccount() {
                                 <div className="space-y-4 animate-in slide-in-from-top-2 duration-300">
                                     <div className="space-y-3">
                                         <div className="space-y-2">
-                                            <Label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">New Password</Label>
+                                            <Label className="text-xs font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-500">New Password</Label>
                                             <Input
                                                 type="password"
                                                 placeholder="Min. 6 characters"
@@ -168,7 +171,7 @@ export default function MyAccount() {
                                             />
                                         </div>
                                         <div className="space-y-2">
-                                            <Label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">Confirm Password</Label>
+                                            <Label className="text-xs font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-500">Confirm Password</Label>
                                             <Input
                                                 type="password"
                                                 placeholder="Retype password"
@@ -179,10 +182,10 @@ export default function MyAccount() {
                                         </div>
                                     </div>
                                     <div className="flex flex-col gap-2 pt-2">
-                                        <Button className="bg-purple-600 hover:bg-purple-700 font-bold h-10 rounded-lg shadow-md shadow-purple-100" onClick={handleChangePassword}>
+                                        <Button className="bg-primary hover:bg-primary/90 font-semibold h-10 rounded-lg shadow-md shadow-primary/10" onClick={handleChangePassword}>
                                             Save New Password
                                         </Button>
-                                        <Button variant="ghost" className="font-bold text-slate-400 hover:text-slate-600 h-10 rounded-lg" onClick={() => setIsChangingPassword(false)}>
+                                        <Button variant="ghost" className="font-semibold text-slate-400 hover:text-slate-600 h-10 rounded-lg" onClick={() => setIsChangingPassword(false)}>
                                             Cancel
                                         </Button>
                                     </div>
@@ -190,7 +193,7 @@ export default function MyAccount() {
                             ) : (
                                 <Button
                                     variant="outline"
-                                    className="w-full border-purple-200 text-purple-600 hover:bg-purple-50 font-bold gap-2 h-10 rounded-lg transition-all"
+                                    className="w-full border-primary/20 text-primary hover:bg-primary/5 font-semibold gap-2 h-10 rounded-lg transition-all"
                                     onClick={() => setIsChangingPassword(true)}
                                 >
                                     <KeyRound size={16} /> Change password
@@ -204,21 +207,21 @@ export default function MyAccount() {
                 <div className="flex-1 w-full">
                     <Card className="shadow-xl border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-800/50 backdrop-blur-sm transition-colors">
                         <CardHeader className="bg-slate-50/30 dark:bg-slate-900/50 border-b border-slate-50 dark:border-slate-800">
-                            <CardTitle className="text-lg font-bold flex items-center gap-2 dark:text-slate-100">
-                                <UserCircle className="text-purple-500 w-5 h-5" /> Account Details
+                            <CardTitle className="text-lg font-semibold flex items-center gap-2 dark:text-slate-100">
+                                <UserCircle className="text-primary w-5 h-5" /> Account Details
                             </CardTitle>
                             <CardDescription className="text-xs font-medium dark:text-slate-400">Manage your personal information and how it appears to others.</CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-6 pt-6">
                             <div className="grid gap-6">
                                 <div className="space-y-2">
-                                    <Label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">Full Name</Label>
+                                    <Label className="text-xs font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-500">Full Name</Label>
                                     {isEditingName ? (
                                         <div className="flex gap-2">
                                             <Input
                                                 value={newName}
                                                 onChange={(e) => setNewName(e.target.value)}
-                                                className="bg-white dark:bg-slate-900 border-purple-200 dark:border-purple-900/50 focus-visible:ring-purple-500 font-bold text-sm dark:text-slate-200 transition-colors"
+                                                className="bg-white dark:bg-slate-900 border-primary/20 dark:border-primary/30 focus-visible:ring-primary font-semibold text-sm dark:text-slate-200 transition-colors"
                                             />
                                             <Button size="icon" className="shrink-0 bg-green-500 hover:bg-green-600 dark:bg-green-600 dark:hover:bg-green-700 h-10 w-10 rounded-lg text-white" onClick={handleUpdateName}>
                                                 <Check size={16} />
@@ -229,8 +232,8 @@ export default function MyAccount() {
                                         </div>
                                     ) : (
                                         <div className="flex items-center justify-between p-3 bg-white dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800 rounded-lg shadow-sm transition-colors">
-                                            <span className="text-sm font-bold text-slate-700 dark:text-slate-200">{user?.name}</span>
-                                            <Button variant="ghost" size="sm" className="h-8 text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 hover:bg-purple-50 dark:hover:bg-purple-900/30 font-bold gap-2 rounded-lg transition-all" onClick={() => setIsEditingName(true)}>
+                                            <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">{user?.name}</span>
+                                            <Button variant="ghost" size="sm" className="h-8 text-primary dark:text-primary/70 hover:text-primary/80 dark:hover:text-primary hover:bg-primary/5 dark:hover:bg-primary/10 font-semibold gap-2 rounded-lg transition-all" onClick={() => setIsEditingName(true)}>
                                                 <Edit2 size={12} /> Edit
                                             </Button>
                                         </div>
@@ -238,24 +241,17 @@ export default function MyAccount() {
                                 </div>
 
                                 <div className="space-y-2">
-                                    <Label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">Username (Login ID)</Label>
-                                    <div className="p-3 bg-slate-50 dark:bg-slate-900/50 rounded-lg border border-slate-100 dark:border-slate-800 text-sm font-bold text-slate-400 dark:text-slate-600 flex items-center justify-between transition-colors">
+                                    <Label className="text-xs font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-500">Username (Login ID)</Label>
+                                    <div className="p-3 bg-slate-50 dark:bg-slate-900/50 rounded-lg border border-slate-100 dark:border-slate-800 text-sm font-semibold text-slate-400 dark:text-slate-600 flex items-center justify-between transition-colors">
                                         {user?.username}
                                         <Lock size={14} className="opacity-40" />
                                     </div>
-                                    <p className="text-[10px] text-slate-400 dark:text-slate-500 italic font-medium">Username is fixed and used for authentication.</p>
+                                    <p className="text-xs text-slate-400 dark:text-slate-500 italic font-medium">Username is fixed and used for authentication.</p>
                                 </div>
 
                                 <div className="space-y-2">
-                                    <Label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">Email Address</Label>
-                                    <div className="p-3 bg-slate-50 dark:bg-slate-900/50 rounded-lg border border-slate-100 dark:border-slate-800 text-sm font-bold text-slate-900 dark:text-slate-200 transition-colors">
-                                        {user?.email || 'N/A'}
-                                    </div>
-                                </div>
-
-                                <div className="space-y-2">
-                                    <Label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">Primary Role</Label>
-                                    <div className="p-3 bg-slate-50 dark:bg-slate-900/50 rounded-lg border border-slate-100 dark:border-slate-800 text-sm font-bold text-slate-900 dark:text-slate-200 capitalize transition-colors">
+                                    <Label className="text-xs font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-500">Primary Role</Label>
+                                    <div className="p-3 bg-slate-50 dark:bg-slate-900/50 rounded-lg border border-slate-100 dark:border-slate-800 text-sm font-semibold text-slate-900 dark:text-slate-200 capitalize transition-colors">
                                         {user?.role}
                                     </div>
                                 </div>
