@@ -8,6 +8,14 @@ export default {
         "./src/**/*.{js,jsx,ts,tsx}"
     ],
     theme: {
+        screens: {
+            'xs': '420px',
+            'sm': '640px',
+            'md': '768px',
+            'lg': '1024px',
+            'xl': '1280px',
+            '2xl': '1536px',
+        },
         extend: {
             borderRadius: {
                 xl: "var(--radius)",
@@ -71,7 +79,14 @@ export default {
                 input: "hsl(var(--input))",
                 ring: "hsl(var(--ring))"
             },
+            letterSpacing: {
+                'page-title': '-0.02em',
+                'section-title': '-0.015em',
+                'label': '0.05em',
+                'button': '0.01em',
+            },
             keyframes: {
+
                 "gradient-x": {
                     "0%, 100%": {
                         "background-size": "200% 200%",

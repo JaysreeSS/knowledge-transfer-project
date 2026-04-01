@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from '@/components/ui/card';
 import { Check, ChevronRight, ChevronLeft, ArrowLeft, UserPlus, FileText, Trash2, ShieldCheck, UserCircle } from 'lucide-react';
 import { toast } from 'sonner';
@@ -21,23 +22,15 @@ export default function CreateProject() {
     const [formData, setFormData] = useState({
         name: '',
         description: '',
-        deadline: '',
         members: [], // { userId, ktRole, functionalRole }
-        sections: [] // { id, title, contributorId }
+        sections: [], // { id, title, contributorId }
+        techStack: []
     });
+    const [techStackRaw, setTechStackRaw] = useState('');
 
 
 
-    // Auto-calculate deadline based on settings
-    useEffect(() => {
-        if (!formData.deadline) {
-            const days = parseInt(localStorage.getItem('p_default_period') || '30');
-            const date = new Date();
-            date.setDate(date.getDate() + days);
-            const formatted = date.toISOString().split('T')[0];
-            setFormData(prev => ({ ...prev, deadline: formatted }));
-        }
-    }, [formData.name]); // Trigger when name starts being typed
+    // Auto-calculate deadline removed as projects in ACTIVE mode do not have enforced deadlines.
 
     const availableUsers = users.filter(u => !u.isAdmin && u.role !== 'System Admin');
 
@@ -56,15 +49,6 @@ export default function CreateProject() {
     };
 
     const updateMemberRole = (userId, ktRole) => {
-        // Enforce max 2 initiators
-        if (ktRole === 'Initiator') {
-            const currentInitiators = formData.members.filter(m => m.ktRole === 'Initiator').length;
-            const isAlreadyInitiator = formData.members.find(m => m.userId === userId)?.ktRole === 'Initiator';
-            if (currentInitiators >= 2 && !isAlreadyInitiator) {
-                toast.error('You can select only up to 2 Initiators.');
-                return;
-            }
-        }
         setFormData({
             ...formData,
             members: formData.members.map(m => m.userId === userId ? { ...m, ktRole } : m)
@@ -90,8 +74,20 @@ export default function CreateProject() {
     };
 
     const handleSubmit = async () => {
+        const techStack = techStackRaw.split(',').map(t => t.trim()).filter(Boolean).map(t => {
+            // Very basic heuristic to guess category for common techs
+            let category = 'Other';
+            const low = t.toLowerCase();
+            if (['react', 'vue', 'angular', 'svelte', 'tailwind', 'css', 'html', 'javascript', 'typescript'].some(x => low.includes(x))) category = 'Frontend';
+            else if (['node', 'python', 'django', 'fastapi', 'java', 'spring', 'go', 'express'].some(x => low.includes(x))) category = 'Backend';
+            else if (['supabase', 'firebase', 'sql', 'mongo', 'redis', 'postgres', 'db'].some(x => low.includes(x))) category = 'Database';
+            else if (['docker', 'kubernetes', 'aws', 'azure', 'gcp', 'vercel', 'deploy'].some(x => low.includes(x))) category = 'Infrastructure';
+            return { name: t, category };
+        });
+
         const projectData = {
             ...formData,
+            techStack,
             managerId: user.id,
             managerName: user.name
         };
@@ -148,22 +144,20 @@ export default function CreateProject() {
                                 onChange={e => setFormData({ ...formData, description: e.target.value })}
                             />
                         </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 transition-colors">
-                            <div className="space-y-2 transition-colors">
-                                <Label htmlFor="deadline" className="text-xs font-medium uppercase tracking-label text-slate-500 dark:text-slate-400 transition-colors">Target deadline</Label>
-                                <Input
-                                    id="deadline"
-                                    type="date"
-                                    className="h-10 text-sm border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 font-semibold color-scheme-dark"
-                                    value={formData.deadline}
-                                    onChange={e => setFormData({ ...formData, deadline: e.target.value })}
-                                />
-                            </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="tech" className="text-xs font-medium uppercase tracking-label text-slate-500 dark:text-slate-400">Technological Stack (comma separated)</Label>
+                            <Input
+                                id="tech"
+                                placeholder="React, Node.js, Supabase, Redis..."
+                                className="h-10 text-sm border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 font-medium"
+                                value={techStackRaw}
+                                onChange={e => setTechStackRaw(e.target.value)}
+                            />
                         </div>
                     </CardContent>
                     <CardFooter className="p-6 bg-slate-50 dark:bg-slate-900/50 border-t border-slate-100 dark:border-slate-800 flex justify-end">
                         <Button onClick={handleNext} disabled={!formData.name} className="h-10 px-8 rounded-lg font-medium tracking-button bg-slate-900 dark:bg-primary text-white hover:bg-slate-800 dark:hover:bg-primary/90 shadow-sm transition-all text-sm">
-                            Assign team <ChevronRight className="ml-2 w-4 h-4" />
+                            Select team <ChevronRight className="ml-2 w-4 h-4" />
                         </Button>
                     </CardFooter>
                 </Card>
@@ -175,64 +169,59 @@ export default function CreateProject() {
                         <div className="w-10 h-10 bg-orange-50 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400 rounded-lg flex items-center justify-center mb-4 border border-orange-100 dark:border-orange-800">
                             <UserPlus className="w-5 h-5" />
                         </div>
-                        <CardTitle className="text-xl font-semibold tracking-page-title text-slate-900 dark:text-slate-100">Assign team & roles</CardTitle>
-                        <CardDescription className="text-xs font-medium text-slate-400 dark:text-slate-500 mt-1">Select the stakeholders for this knowledge transfer.</CardDescription>
+                        <CardTitle className="text-xl font-semibold tracking-page-title text-slate-900 dark:text-slate-100">Select project team</CardTitle>
+                        <CardDescription className="text-xs font-medium text-slate-400 dark:text-slate-500 mt-1">Select the team members who will contribute to this knowledge base.</CardDescription>
                     </CardHeader>
                     <CardContent className="p-6 space-y-8">
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            {availableUsers.map(u => {
-                                const selected = formData.members.find(m => m.userId === u.id);
-                                return (
-                                    <div
-                                        key={u.id}
-                                        onClick={() => toggleMember(u)}
-                                        className={`p-4 rounded-xl border transition-all cursor-pointer flex items-center gap-4 ${selected ? 'border-orange-500 dark:border-orange-600 bg-orange-50/40 dark:bg-orange-900/20 shadow-sm' : 'border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 hover:border-slate-200 dark:hover:border-slate-700'
-                                            }`}
-                                    >
-                                        <div className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold text-sm ${selected ? 'bg-orange-500 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-600'}`}>
-                                            {u.name.charAt(0)}
-                                        </div>
-                                        <div className="flex-1 min-w-0 transition-colors">
-                                            <p className="text-sm font-semibold text-slate-900 dark:text-slate-100 truncate transition-colors">{u.name}</p>
-                                            <p className="text-xs font-medium uppercase tracking-label text-slate-400 dark:text-slate-500 transition-colors">{u.role}</p>
-                                        </div>
-                                        {selected && <Check className="w-4 h-4 text-orange-600 dark:text-orange-400 shrink-0 transition-colors" />}
+                        <div className="space-y-8">
+                            {Object.entries(
+                                availableUsers.reduce((acc, u) => {
+                                    const role = u.role || 'Other';
+                                    if (!acc[role]) acc[role] = [];
+                                    acc[role].push(u);
+                                    return acc;
+                                }, {})
+                            )
+                            .sort(([roleA], [roleB]) => {
+                                const weights = { 'System Admin': 1, 'Manager': 2 };
+                                const wA = weights[roleA] || 3;
+                                const wB = weights[roleB] || 3;
+                                if (wA !== wB) return wA - wB;
+                                return roleA.localeCompare(roleB);
+                            })
+                            .map(([role, users]) => (
+                                <div key={role} className="space-y-4">
+                                    <div className="flex items-center gap-2 border-b border-slate-100 dark:border-slate-800 pb-2">
+                                        <h3 className="text-xs font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">{role}s</h3>
+                                        <Badge variant="secondary" className="h-4 px-1.5 text-[9px] font-bold bg-slate-100 dark:bg-slate-900 text-slate-500 dark:text-slate-400 border-none">{users.length}</Badge>
                                     </div>
-                                );
-                            })}
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        {users.map(u => {
+                                            const selected = formData.members.find(m => m.userId === u.id);
+                                            return (
+                                                <div
+                                                    key={u.id}
+                                                    onClick={() => toggleMember(u)}
+                                                    className={`p-4 rounded-xl border transition-all cursor-pointer flex items-center gap-4 ${selected ? 'border-orange-500 dark:border-orange-600 bg-orange-50/40 dark:bg-orange-900/20 shadow-sm' : 'border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 hover:border-slate-200 dark:hover:border-slate-700'
+                                                        }`}
+                                                >
+                                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold text-sm ${selected ? 'bg-orange-500 text-white shadow-md' : 'bg-slate-100 dark:bg-slate-900 text-slate-400 dark:text-slate-600 border border-slate-200 dark:border-slate-800'}`}>
+                                                        {u.name.charAt(0)}
+                                                    </div>
+                                                    <div className="flex-1 min-w-0 transition-colors">
+                                                        <p className="text-sm font-semibold text-slate-900 dark:text-slate-100 truncate transition-colors">{u.name}</p>
+                                                        <p className="text-[10px] font-bold uppercase tracking-label text-slate-400 dark:text-slate-500 transition-colors leading-none mt-1">{u.role}</p>
+                                                    </div>
+                                                    {selected && <Check className="w-4 h-4 text-orange-600 dark:text-orange-400 shrink-0 transition-colors" />}
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            ))}
                         </div>
 
-                        {formData.members.length > 0 && (
-                            <div className="space-y-4 pt-8 border-t border-slate-100 dark:border-slate-800">
-                                <h3 className="text-xs font-medium uppercase tracking-label text-slate-400 dark:text-slate-500">Define kt responsibilities</h3>
-                                <div className="grid grid-cols-1 gap-4">
-                                    {formData.members.map(m => (
-                                        <div key={m.userId} className="flex items-center justify-between p-4 bg-slate-50/50 dark:bg-slate-900/30 border border-slate-100 dark:border-slate-800 rounded-xl transition-colors">
-                                            <div className="flex items-center gap-4">
-                                                <div className="w-6 h-6 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-xs font-semibold text-slate-600 dark:text-slate-400 transition-colors">
-                                                    {m.name.charAt(0)}
-                                                </div>
-                                                <span className="font-semibold text-sm text-slate-900 dark:text-slate-100">{m.name}</span>
-                                            </div>
-                                            <div className="flex bg-white dark:bg-slate-900 p-1 rounded-lg border border-slate-200 dark:border-slate-800 shadow-sm transition-colors">
-                                                {['Initiator', 'Contributor', 'Receiver']
-                                                    .filter(role => !(m.functionalRole === 'Manager' && role === 'Receiver'))
-                                                    .map(role => (
-                                                        <button
-                                                            key={role}
-                                                            onClick={() => updateMemberRole(m.userId, role)}
-                                                            className={`px-4 py-2 text-xs font-medium uppercase tracking-label rounded-md transition-all ${m.ktRole === role ? 'bg-orange-500 dark:bg-orange-600 text-white shadow-sm' : 'text-slate-400 dark:text-slate-600 hover:text-slate-600 dark:hover:text-slate-400'
-                                                                }`}
-                                                        >
-                                                            {role}
-                                                        </button>
-                                                    ))}
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
+                        {/* Role assignment removed - all users are Contributors by default */}
                     </CardContent>
                     <CardFooter className="p-6 bg-slate-50 dark:bg-slate-900/50 border-t border-slate-100 dark:border-slate-800 flex justify-between">
                         <Button variant="ghost" onClick={handleBack} className="h-10 px-6 font-medium text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 transition-colors text-xs tracking-button">
@@ -288,7 +277,7 @@ export default function CreateProject() {
                                                                     : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 hover:border-emerald-300 dark:hover:border-emerald-700'
                                                                     }`}
                                                             >
-                                                                {m.name} ({m.ktRole})
+                                                                {m.name} <span className="opacity-70 ml-1 text-[9px] lowercase italic font-normal">({m.functionalRole})</span>
                                                             </button>
                                                         ))
                                                     )}

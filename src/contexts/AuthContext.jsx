@@ -9,6 +9,13 @@ export const AuthProvider = ({ children }) => {
 
     useEffect(() => {
         // Check active sessions and sets the user
+        const withTimeout = (promise, ms = 8000) => {
+            return Promise.race([
+                promise,
+                new Promise((_, reject) => setTimeout(() => reject(new Error("Auth request timed out")), ms))
+            ]);
+        };
+
         const getSession = async () => {
             console.log("[Auth] Checking session...");
             // Use session storage for immediate UI restore
@@ -22,16 +29,32 @@ export const AuthProvider = ({ children }) => {
                 }
             }
 
-            const { data: { session } } = await supabase.auth.getSession();
-            if (session) {
-                console.log("[Auth] Session found, fetching profile...");
-                await fetchProfile(session.user.id, session.user.email);
-            } else {
-                console.log("[Auth] No session found.");
-                setUser(null);
-                sessionStorage.removeItem("kt_user");
+            try {
+                const { data: { session } } = await withTimeout(supabase.auth.getSession());
+                if (session) {
+                    console.log("[Auth] Session found, fetching profile...");
+                    const profile = await fetchProfile(session.user.id, session.user.email);
+                    if (!profile && !cachedUser) {
+                        // Profile fetch failed/timed out and no cache, force logout to be safe
+                        console.warn("[Auth] Profile fetch failed/timed out, clearing session.");
+                        await supabase.auth.signOut();
+                        setUser(null);
+                        sessionStorage.removeItem("kt_user");
+                    }
+                } else {
+                    console.log("[Auth] No session found.");
+                    setUser(null);
+                    sessionStorage.removeItem("kt_user");
+                }
+            } catch (error) {
+                console.error("[Auth] Session check timed out or failed:", error);
+                if (!cachedUser) {
+                    setUser(null);
+                    sessionStorage.removeItem("kt_user");
+                }
+            } finally {
+                setLoading(false);
             }
-            setLoading(false);
         };
 
         getSession();
@@ -54,7 +77,7 @@ export const AuthProvider = ({ children }) => {
         console.log(`[Auth] Fetching profile for ${email}(${userId})`);
 
         // Helper to add timeout to promises
-        const withTimeout = (promise, ms = 5000) => {
+        const withTimeout = (promise, ms = 20000) => {
             return Promise.race([
                 promise,
                 new Promise((_, reject) => setTimeout(() => reject(new Error("Supabase request timed out")), ms))
@@ -182,14 +205,7 @@ export const AuthProvider = ({ children }) => {
 
             const dbUpdates = {};
             if (name !== undefined) dbUpdates.name = name;
-
-            // Only try to update avatar_url in DB if we think it exists, 
-            // but we'll prioritize localStorage for now to avoid schema errors
-            if (avatar_url !== undefined) {
-                localStorage.setItem(`user_avatar_${user.id}`, avatar_url);
-                // We'll also try to update it in DB but catch the error gracefully
-                dbUpdates.avatar_url = avatar_url;
-            }
+            if (avatar_url !== undefined) dbUpdates.avatar_url = avatar_url;
 
             if (Object.keys(dbUpdates).length > 0) {
                 const { error: dbError } = await supabase
@@ -197,25 +213,10 @@ export const AuthProvider = ({ children }) => {
                     .update(dbUpdates)
                     .eq('id', user.id);
 
-                if (dbError) {
-                    // If it's a "column not found" error, we just ignore it for avatar_url
-                    if (dbError.code === 'PGRST204' || dbError.message?.includes('avatar_url')) {
-                        console.warn("[Auth] avatar_url column missing, saved to localStorage only");
-                        // If name was also being updated, we need to retry without avatar_url
-                        if (name !== undefined) {
-                            const { error: retryError } = await supabase
-                                .from('users')
-                                .update({ name })
-                                .eq('id', user.id);
-                            if (retryError) throw retryError;
-                        }
-                    } else {
-                        throw dbError;
-                    }
-                }
+                if (dbError) throw dbError;
                 console.log("[Auth] Profile update handled successfully");
 
-                await fetchProfile(user.id, user.email);
+                await fetchProfile(user.id, user.username); // Re-fetch from DB
             }
 
             return results;
@@ -232,8 +233,64 @@ export const AuthProvider = ({ children }) => {
         sessionStorage.removeItem("kt_user");
     };
 
+    const completeOnboarding = async () => {
+        if (!user) {
+            console.warn("[Auth] Cannot complete onboarding: No user in state.");
+            return;
+        }
+        
+        try {
+            console.log("[Auth] Attempting to update first_login to false for:", user.id);
+            const { data, error, count } = await supabase
+                .from('users')
+                .update({ first_login: false })
+                .eq('id', user.id)
+                .select();
+
+            if (error) {
+                console.error("[Auth] Supabase error during update:", error);
+                // If it's just a column missing or timeout, we still want to update local state
+                if (error.code === 'PGRST204' || error.message?.includes('first_login') || error.message?.includes('timeout')) {
+                    console.warn("[Auth] Updating local state only due to Supabase issue.");
+                } else {
+                    // For other errors, we still continue to update local state to avoid user loop,
+                    // but we log it as a failure for the DB part.
+                    console.error("[Auth] Non-critical Supabase failure, continuing with local update.");
+                }
+            } else {
+                console.log("[Auth] Supabase update successful. Rows affected:", count);
+            }
+
+            // ALWAYS update local state to prevent the tour from looping for the user
+            const updatedUser = { ...user, first_login: false };
+            setUser(updatedUser);
+            sessionStorage.setItem("kt_user", JSON.stringify(updatedUser));
+            console.log("[Auth] Local user state updated (first_login: false)");
+            return { success: true };
+        } catch (error) {
+            console.error("[Auth] Failed to complete onboarding (DB part):", error);
+            // Even in the catch block, we attempt to save the local state
+            try {
+                const updatedUser = { ...user, first_login: false };
+                setUser(updatedUser);
+                sessionStorage.setItem("kt_user", JSON.stringify(updatedUser));
+            } catch (innerError) {
+                console.error("[Auth] Critical failure updating local state:", innerError);
+            }
+            return { success: false, error: error.message };
+        }
+    };
+
     return (
-        <AuthContext.Provider value={{ user, login, logout, updateProfile, isAuthenticated: !!user, loading }}>
+        <AuthContext.Provider value={{ 
+            user, 
+            login, 
+            logout, 
+            updateProfile, 
+            completeOnboarding,
+            isAuthenticated: !!user, 
+            loading 
+        }}>
             {children}
         </AuthContext.Provider>
     );

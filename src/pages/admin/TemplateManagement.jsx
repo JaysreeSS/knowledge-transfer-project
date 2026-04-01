@@ -73,7 +73,7 @@ export default function TemplateManagement({ isEmbedded = false }) {
 
 
     return (
-        <div className={`px-8 md:px-12 py-6 max-w-7xl mx-auto space-y-8 animate-in fade-in duration-500 ${isEmbedded ? 'px-0 py-0' : ''}`}>
+        <div className={`px-8 md:px-12 py-6 max-w-7xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-500 ${isEmbedded ? 'px-0 py-0' : ''}`}>
 
             {!isEmbedded && (
                 <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 transition-all">

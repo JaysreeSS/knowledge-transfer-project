@@ -123,7 +123,7 @@ export default function MyAccount() {
                                             <X size={12} />
                                         </button>
                                     </div>
-                                    <div className="grid grid-cols-4 gap-2.5">
+                                    <div className="grid grid-cols-3 xs:grid-cols-4 gap-2.5">
                                         {AVATAR_PRESETS.map((item) => (
                                             <button
                                                 key={item.seed}
