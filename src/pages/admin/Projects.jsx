@@ -4,16 +4,31 @@ import { useAuth } from '../../contexts/AuthContext.jsx';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
-import { Trash2, Eye, ShieldAlert, ChevronLeft, ChevronRight, Search } from 'lucide-react';
+import { Trash2, ShieldAlert, ChevronLeft, ChevronRight, Search, Eye, UserCheck } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Input } from '@/components/ui/input';
 import { useAdmin } from '../../contexts/AdminContext.jsx';
 import { toast } from 'sonner';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { getAvatarUrl } from '@/lib/utils';
-
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 export default function AdminProjects({ isEmbedded = false }) {
-    const { projects, deleteProject } = useProjects();
+    const { projects, deleteProject, updateProjectStatus, triggerTransition, archiveProject } = useProjects();
     const { users, settings } = useAdmin();
     const themeColor = settings?.theme_color?.replace('#', '') || localStorage.getItem('a_theme_color')?.replace('#', '') || '7c3aed';
     const { user } = useAuth();
@@ -21,6 +36,9 @@ export default function AdminProjects({ isEmbedded = false }) {
     const [searchTerm, setSearchTerm] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
     const [pendingDeleteId, setPendingDeleteId] = useState(null);
+    const [activeTab, setActiveTab] = useState('active');
+    const [phaseTab, setPhaseTab] = useState('ACTIVE'); // 'ACTIVE' or 'TRANSITION'
+    const [sortBy, setSortBy] = useState('Newest First');
     const itemsPerPage = 5;
 
     // Reset pagination when search term changes
@@ -28,13 +46,19 @@ export default function AdminProjects({ isEmbedded = false }) {
         setCurrentPage(1);
     }, [searchTerm]);
 
-    const sortedProjects = [...projects].sort((a, b) => {
-        const statusOrder = { 'In Progress': 0, 'Ready': 0, 'Review': 0, 'Completed': 1, 'Signed Off': 1 };
-        const statusA = statusOrder[a.status] ?? 0;
-        const statusB = statusOrder[b.status] ?? 0;
+    const filteredByTab = projects.filter(p => {
+        if (activeTab === 'archived') return p.status === 'Archived';
+        // For active projects, sub-filter by phase
+        return p.status !== 'Archived' && p.lifecycleMode === phaseTab;
+    });
 
-        if (statusA !== statusB) return statusA - statusB;
-        return new Date(b.created_at || 0) - new Date(a.created_at || 0);
+    const sortedProjects = [...filteredByTab].sort((a, b) => {
+        if (sortBy === 'Newest First') return new Date(b.created_at || b.createdAt || 0) - new Date(a.created_at || a.createdAt || 0);
+        if (sortBy === 'Oldest First') return new Date(a.created_at || a.createdAt || 0) - new Date(b.created_at || b.createdAt || 0);
+        if (sortBy === 'Completion %') return (b.completion || 0) - (a.completion || 0);
+        if (sortBy === 'Status') return (a.status || '').localeCompare(b.status || '');
+        if (sortBy === 'Recently Updated') return new Date(b.updated_at || b.createdAt || 0) - new Date(a.updated_at || a.createdAt || 0);
+        return 0;
     });
 
     const filteredProjects = sortedProjects.filter(p =>
@@ -75,11 +99,11 @@ export default function AdminProjects({ isEmbedded = false }) {
             {!isEmbedded && (
                 <header className="flex flex-col md:flex-row md:items-center justify-between gap-6 transition-colors">
                     <div className="space-y-1 transition-colors">
-                        <h1 className="text-2xl font-semibold tracking-page-title text-slate-900 dark:text-slate-100 transition-colors">Projects management</h1>
+                    <h1 id="admin-projects-header" className="text-2xl font-semibold tracking-page-title text-slate-900 dark:text-slate-100 transition-colors">Projects management</h1>
                         <p className="text-slate-500 dark:text-slate-400 text-sm font-medium transition-colors">Monitor and manage all active knowledge transfer initiatives.</p>
                     </div>
-                    <div className="flex items-center gap-4 transition-colors">
-                        <div className="relative w-80 group transition-colors">
+                    <div className="flex flex-col sm:flex-row items-center gap-4 transition-colors w-full md:w-auto">
+                        <div className="relative w-full md:w-80 group transition-colors">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-primary transition-colors" />
                             <Input
                                 placeholder="Search projects or managers..."
@@ -88,9 +112,63 @@ export default function AdminProjects({ isEmbedded = false }) {
                                 onChange={(e) => setSearchTerm(e.target.value)}
                             />
                         </div>
+                        <div className="flex gap-2 w-full sm:w-auto justify-end">
+                            <select 
+                                className="h-10 px-3 flex-1 sm:flex-none bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg text-sm outline-none font-medium focus:ring-primary/20"
+                                value={sortBy}
+                                onChange={(e) => setSortBy(e.target.value)}
+                            >
+                                <option>Newest First</option>
+                                <option>Oldest First</option>
+                                <option>Deadline</option>
+                                <option>Completion %</option>
+                                <option>Status</option>
+                                <option>Recently Updated</option>
+                            </select>
+                        </div>
                     </div>
                 </header>
             )}
+
+            <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 mb-6">
+                <div className="flex gap-4">
+                    <button 
+                        className={`pb-3 px-1 text-[11px] font-bold uppercase tracking-widest transition-all ${activeTab === 'active' ? 'border-b-2 border-primary text-primary' : 'text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300'}`}
+                        onClick={() => setActiveTab('active')}
+                    >
+                        Active Projects
+                    </button>
+                    <button 
+                        className={`pb-3 px-1 text-[11px] font-bold uppercase tracking-widest transition-all ${activeTab === 'archived' ? 'border-b-2 border-primary text-primary' : 'text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300'}`}
+                        onClick={() => setActiveTab('archived')}
+                    >
+                        Archived Projects
+                    </button>
+                </div>
+
+                {activeTab === 'active' && (
+                    <div className="flex gap-2 bg-slate-100/50 dark:bg-slate-900/50 p-1 rounded-xl border border-slate-200/50 dark:border-slate-800/50 mb-2">
+                        <button 
+                            onClick={() => setPhaseTab('ACTIVE')}
+                            className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-[9px] font-bold uppercase tracking-widest transition-all ${phaseTab === 'ACTIVE' ? 'bg-white dark:bg-slate-800 text-primary shadow-sm ring-1 ring-slate-200/50 dark:ring-slate-700/50' : 'text-slate-400 hover:text-slate-600'}`}
+                        >
+                            Active Phase
+                            <span className={`px-1.5 py-0.5 rounded-md text-[8px] ${phaseTab === 'ACTIVE' ? 'bg-primary/10 text-primary' : 'bg-slate-100 dark:bg-slate-800 text-slate-400'}`}>
+                                {projects.filter(p => p.status !== 'Archived' && p.lifecycleMode === 'ACTIVE').length}
+                            </span>
+                        </button>
+                        <button 
+                            onClick={() => setPhaseTab('TRANSITION')}
+                            className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-[9px] font-bold uppercase tracking-widest transition-all ${phaseTab === 'TRANSITION' ? 'bg-white dark:bg-slate-800 text-orange-600 shadow-sm ring-1 ring-slate-200/50 dark:ring-slate-700/50' : 'text-slate-400 hover:text-slate-600'}`}
+                        >
+                            Transition Phase
+                            <span className={`px-1.5 py-0.5 rounded-md text-[8px] ${phaseTab === 'TRANSITION' ? 'bg-orange-600/10 text-orange-600' : 'bg-slate-100 dark:bg-slate-800 text-slate-400'}`}>
+                                {projects.filter(p => p.status !== 'Archived' && p.lifecycleMode === 'TRANSITION').length}
+                            </span>
+                        </button>
+                    </div>
+                )}
+            </div>
 
             <div className="grid grid-cols-1 gap-6">
                 {filteredProjects.length === 0 ? (
@@ -106,53 +184,69 @@ export default function AdminProjects({ isEmbedded = false }) {
                             <div className="overflow-x-auto">
                                 <table className="w-full text-left border-collapse min-w-[800px]">
                                     <thead className="bg-slate-50/50 dark:bg-slate-900/50 border-b border-slate-200 dark:border-slate-800">
-                                        <tr>
-                                            <th className="p-4 text-xs font-medium uppercase tracking-label text-slate-500 dark:text-slate-400">Project detail</th>
-                                            <th className="p-4 text-xs font-medium uppercase tracking-label text-slate-500 dark:text-slate-400">Owner / manager</th>
-                                            <th className="p-4 text-xs font-medium uppercase tracking-label text-slate-500 dark:text-slate-400 text-center">Status</th>
-                                            <th className="p-4 text-xs font-medium uppercase tracking-label text-slate-500 dark:text-slate-400">Progress</th>
-                                            <th className="p-4 text-xs font-medium uppercase tracking-label text-slate-500 dark:text-slate-400">Deadline</th>
-                                            <th className="p-4 text-xs font-medium uppercase tracking-label text-slate-500 dark:text-slate-400 text-right pr-6"></th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                                        {paginatedProjects.map((p) => {
-                                            const displayCompletion = p.completion || 0;
+                                            <tr>
+                                                <th className="p-4 text-xs font-medium uppercase tracking-label text-slate-500 dark:text-slate-400 w-[40%]">Project details</th>
+                                                <th className="p-4 text-xs font-medium uppercase tracking-label text-slate-500 dark:text-slate-400">Owner / manager</th>
+                                                {phaseTab === 'ACTIVE' ? (
+                                                    <th className="p-4 text-xs font-medium uppercase tracking-label text-slate-500 dark:text-slate-400 text-center">Created At</th>
+                                                ) : (
+                                                    <>
+                                                        <th className="p-4 text-xs font-medium uppercase tracking-label text-slate-500 dark:text-slate-400 text-center">Deadline</th>
+                                                        <th className="p-4 text-xs font-medium uppercase tracking-label text-slate-500 dark:text-slate-400 text-center">Status</th>
+                                                    </>
+                                                )}
+                                                <th className="p-4 text-xs font-medium uppercase tracking-label text-slate-500 dark:text-slate-400">Progress</th>
+                                                <th className="p-4 text-xs font-medium uppercase tracking-label text-slate-500 dark:text-slate-400 text-right pr-6"></th>
+                                            </tr>
+                                            </thead>
+                                            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                                                {paginatedProjects.map((p) => {
+                                                    const displayCompletion = p.completion || 0;
+                                                    const displayDeadline = p.deadline ? new Date(p.deadline).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : 'No deadline';
 
-                                            return (
-                                                <tr key={p.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-900/50 transition-colors cursor-pointer group" onClick={() => navigate(`/admin/projects/${p.id}`, { state: { from: '/admin/projects' } })}>
-                                                    <td className="p-4 py-5">
-                                                        <div className="flex flex-col gap-0.5">
-                                                            <span className="text-sm font-semibold text-slate-900 dark:text-slate-100 group-hover:text-primary transition-colors">{p.name}</span>
-                                                            <span className="text-xs text-slate-400 dark:text-slate-500 font-medium truncate max-w-[200px]">{p.description || 'No description provided.'}</span>
-                                                        </div>
-                                                    </td>
-                                                    <td className="p-4">
-                                                        <div className="flex items-center gap-2.5 transition-colors">
-                                                            {(() => {
-                                                                const manager = users.find(u => u.id === p.managerId) || users.find(u => u.name === p.managerName) || { name: p.managerName };
-                                                                return (
-                                                                    <>
-                                                                        <Avatar className="w-7 h-7 rounded-full border border-primary/10 dark:border-primary/20 shadow-sm transition-colors shrink-0">
-                                                                            <AvatarImage src={getAvatarUrl(manager.avatar_url || manager.name, themeColor)} alt={manager.name} />
-                                                                            <AvatarFallback className="bg-primary/5 dark:bg-primary/20 text-primary dark:text-primary font-semibold text-[10px] uppercase transition-colors">
-                                                                                {manager.name?.charAt(0) || 'M'}
-                                                                            </AvatarFallback>
-                                                                        </Avatar>
-                                                                        <span className="text-xs font-medium text-slate-700 dark:text-slate-300 transition-colors">{manager.name}</span>
-                                                                    </>
-                                                                );
-                                                            })()}
-                                                        </div>
-                                                    </td>
-
-                                                    <td className="p-4">
-                                                        <div className="flex justify-center">
-                                                            <Badge variant={(p.status === 'Completed' || p.status === 'Signed Off') ? 'success' : p.status === 'In Progress' ? 'blue' : 'soft'} className="normal-case font-semibold">
-                                                                {p.status === 'Completed' || p.status === 'Signed Off' ? 'Signed Off' : (p.status || 'Active')}
-                                                            </Badge>
-                                                        </div>
-                                                    </td>
+                                                    return (
+                                                        <tr key={p.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-900/50 transition-colors cursor-pointer group" onClick={() => navigate(`/admin/projects/${p.id}`, { state: { from: '/admin/projects' } })}>
+                                                            <td className="p-4 py-5">
+                                                                <div className="flex flex-col gap-0.5">
+                                                                    <span className="text-sm font-semibold text-slate-900 dark:text-slate-100 group-hover:text-primary transition-colors truncate max-w-[280px]">{p.name}</span>
+                                                                    <span className="text-[11px] text-slate-400 dark:text-slate-500 font-medium truncate max-w-[280px] italic">
+                                                                        {p.description || 'No description provided.'}
+                                                                    </span>
+                                                                </div>
+                                                            </td>
+                                                            <td className="p-4">
+                                                                <div className="flex items-center gap-2.5 transition-colors">
+                                                                    {(() => {
+                                                                        const manager = users.find(u => u.id === p.managerId) || users.find(u => u.name === p.managerName) || { name: p.managerName };
+                                                                        return (
+                                                                            <>
+                                                                                <Avatar className="w-7 h-7 rounded-full border border-primary/10 dark:border-primary/20 shadow-sm transition-colors shrink-0">
+                                                                                    <AvatarImage src={getAvatarUrl(manager.avatar_url || manager.name, themeColor)} alt={manager.name} />
+                                                                                    <AvatarFallback className="bg-primary/5 dark:bg-primary/20 text-primary dark:text-primary font-semibold text-[10px] uppercase transition-colors">
+                                                                                        {manager.name?.charAt(0) || 'M'}
+                                                                                    </AvatarFallback>
+                                                                                </Avatar>
+                                                                                <span className="text-xs font-medium text-slate-700 dark:text-slate-300 transition-colors">{manager.name}</span>
+                                                                            </>
+                                                                        );
+                                                                    })()}
+                                                                </div>
+                                                            </td>
+                                                            <td className="p-4 text-center transition-colors">
+                                                                <span className="text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-label text-nowrap">
+                                                                    {phaseTab === 'ACTIVE' ? (p.createdAt ? new Date(p.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : 'N/A') : displayDeadline}
+                                                                </span>
+                                                            </td>
+                                                            {phaseTab === 'TRANSITION' && (
+                                                                <td className="p-4 text-center transition-colors">
+                                                                    <div className="flex items-center justify-center gap-2">
+                                                                        <div className={`w-1.5 h-1.5 rounded-full ${p.status === 'In Progress' ? 'bg-blue-500' : 'bg-slate-400'}`} />
+                                                                        <span className="text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-label text-nowrap">
+                                                                            {p.status || 'Active'}
+                                                                        </span>
+                                                                    </div>
+                                                                </td>
+                                                            )}
                                                     <td className="p-4">
                                                         <div className="flex items-center gap-4">
                                                             <div className="flex-1 w-24 h-1.5 bg-slate-100 dark:bg-slate-900 rounded-full overflow-hidden">
@@ -164,13 +258,23 @@ export default function AdminProjects({ isEmbedded = false }) {
                                                             <span className="text-xs font-semibold text-slate-600 dark:text-slate-400 min-w-[30px]">{displayCompletion}%</span>
                                                         </div>
                                                     </td>
-                                                    <td className="p-4">
-                                                        <span className="text-xs font-medium text-slate-600 dark:text-slate-400 transition-colors">
-                                                            {p.deadline ? new Date(p.deadline).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : '---'}
-                                                        </span>
-                                                    </td>
+
                                                     <td className="p-4 text-right pr-6">
                                                         <div className="flex items-center justify-end gap-2">
+                                                            {activeTab === 'active' && p.status === 'Signed Off' && p.lifecycleMode === 'ACTIVE' && (
+                                                                <Button
+                                                                    variant="ghost"
+                                                                    size="sm"
+                                                                    className="text-xs text-orange-600 hover:bg-orange-50 mr-2"
+                                                                    onClick={(e) => { 
+                                                                        e.stopPropagation(); 
+                                                                        archiveProject(p.id);
+                                                                        toast.success('Project archived successfully');
+                                                                    }}
+                                                                >
+                                                                    Archive
+                                                                </Button>
+                                                            )}
                                                             <Button
                                                                 variant="ghost"
                                                                 size="icon"
@@ -238,6 +342,7 @@ export default function AdminProjects({ isEmbedded = false }) {
                     </div>
                 )}
             </div>
+
         </div>
     );
 }

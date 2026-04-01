@@ -164,10 +164,10 @@ const AdminSettings = () => {
 
 
     return (
-        <div className="p-6 sm:p-10 max-w-6xl mx-auto space-y-8 transition-colors">
+        <div className="p-6 sm:p-10 max-w-6xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-500 transition-colors">
             <div className="flex flex-col gap-1.5 transition-colors">
                 <div className="flex items-center gap-4 transition-colors">
-                    <h1 className="text-2xl font-semibold tracking-tight text-slate-900 dark:text-slate-100 transition-colors">System Settings</h1>
+                <h1 id="admin-settings-title" className="text-2xl font-semibold tracking-tight text-slate-900 dark:text-slate-100 transition-colors">System Settings</h1>
                 </div>
                 <p className="text-sm text-slate-500 dark:text-slate-400 font-medium transition-colors">Configure portal preferences, branding, and global project logic.</p>
             </div>
@@ -188,7 +188,7 @@ const AdminSettings = () => {
             </div>
 
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                <TabsList className="hidden md:inline-flex bg-slate-100/50 dark:bg-slate-800/50 p-1 rounded-xl mb-8 border border-slate-200/50 dark:border-slate-800/50 backdrop-blur-sm w-fit transition-all duration-300">
+                <TabsList id="admin-settings-tabs" className="hidden md:inline-flex bg-slate-100/50 dark:bg-slate-800/50 p-1 rounded-xl mb-8 border border-slate-200/50 dark:border-slate-800/50 backdrop-blur-sm w-fit transition-all duration-300">
                     <TabsTrigger value="general" className="rounded-lg gap-2 px-6 py-2 text-xs font-semibold uppercase tracking-wider data-[state=active]:bg-white dark:data-[state=active]:bg-slate-900 data-[state=active]:shadow-sm dark:text-slate-400 dark:data-[state=active]:text-slate-100 dark:hover:text-slate-200 transition-all">
                         <Globe size={14} /> General
                     </TabsTrigger>

@@ -30,9 +30,9 @@ function StarryBackground() {
             <div className="absolute inset-0 bg-gradient-to-br from-[#1a0a2e] via-[#2d1450] to-[#1a0a2e]" />
 
             {/* Galactic glow spots (Nebulae) - Higher visibility */}
-            <div className="absolute top-[10%] left-[20%] w-[800px] h-[800px] rounded-full bg-purple-500/10 blur-[140px] animate-pulse [animation-duration:5s]" />
-            <div className="absolute bottom-[20%] right-[10%] w-[600px] h-[600px] rounded-full bg-indigo-400/10 blur-[120px] animate-pulse [animation-duration:10s]" />
-            <div className="absolute top-[50%] left-[50%] -translate-x-1/2 -translate-y-1/2 w-[1000px] h-[400px] rounded-full bg-blue-400/5 blur-[150px] rotate-45" />
+            <div className="absolute top-[10%] left-[20%] w-[800px] h-[800px] rounded-full bg-primary/10 blur-[140px] animate-pulse [animation-duration:5s]" />
+            <div className="absolute bottom-[20%] right-[10%] w-[600px] h-[600px] rounded-full bg-primary/5 blur-[120px] animate-pulse [animation-duration:10s]" />
+            <div className="absolute top-[50%] left-[50%] -translate-x-1/2 -translate-y-1/2 w-[1000px] h-[400px] rounded-full bg-primary/5 blur-[150px] rotate-45" />
 
             {/* Drifting Galaxy Stars */}
             <svg className="absolute inset-0 w-full h-full">
@@ -134,7 +134,7 @@ export default function Landing() {
                             if (words.length > 1) {
                                 return (
                                     <>
-                                        {words[0]}<span className="bg-clip-text text-transparent bg-gradient-to-r from-purple-400 via-indigo-400 to-purple-400 animate-gradient-x">{words.slice(1).join(' ')}</span>
+                                        {words[0]}<span className="bg-clip-text text-transparent bg-gradient-to-r from-primary via-white/40 to-primary bg-[length:200%_auto] animate-gradient-x">{words.slice(1).join(' ')}</span>
                                     </>
                                 );
                             }
@@ -144,11 +144,11 @@ export default function Landing() {
                 </header>
 
                 {/* Login Card — frosted glass */}
-                <Card className="w-full border-none shadow-2xl shadow-purple-900/30 bg-white/[0.07] backdrop-blur-xl rounded-2xl overflow-hidden ring-1 ring-white/[0.12]">
+                <Card className="w-full border-none shadow-2xl shadow-primary/30 bg-white/[0.07] backdrop-blur-xl rounded-2xl overflow-hidden ring-1 ring-white/[0.12]">
                     <CardContent className="p-8 pt-8">
                         <form onSubmit={handleLogin} className="space-y-5">
                             <div className="space-y-2">
-                                <Label htmlFor="username" className="text-xs font-medium text-purple-200/70 uppercase tracking-label ml-1">
+                                <Label htmlFor="username" className="text-xs font-medium text-white/70 uppercase tracking-label ml-1">
                                     System ID
                                 </Label>
                                 <Input
@@ -156,13 +156,13 @@ export default function Landing() {
                                     placeholder="name@ideassion.com"
                                     value={username}
                                     onChange={(e) => setUsername(e.target.value)}
-                                    className="h-10 rounded-lg bg-white/[0.08] border-white/[0.1] text-white placeholder:text-white/30 focus:bg-white/[0.12] focus:ring-2 focus:ring-purple-400/30 focus:border-purple-400/30 transition-all font-medium text-base"
+                                    className="h-10 rounded-lg bg-white/[0.08] border-white/[0.1] text-white placeholder:text-white/30 focus:bg-white/[0.12] focus:ring-2 focus:ring-primary/30 focus:border-primary/30 transition-all font-medium text-base"
                                     required
                                 />
                             </div>
 
                             <div className="space-y-2">
-                                <Label htmlFor="password" className="text-xs font-medium text-purple-200/70 uppercase tracking-label ml-1">
+                                <Label htmlFor="password" className="text-xs font-medium text-white/70 uppercase tracking-label ml-1">
                                     Password
                                 </Label>
                                 <div className="relative">
@@ -172,7 +172,7 @@ export default function Landing() {
                                         placeholder="••••••••"
                                         value={password}
                                         onChange={(e) => setPassword(e.target.value)}
-                                        className="h-10 rounded-lg bg-white/[0.08] border-white/[0.1] text-white placeholder:text-white/30 focus:bg-white/[0.12] focus:ring-2 focus:ring-purple-400/30 focus:border-purple-400/30 transition-all pr-10 font-medium text-base"
+                                        className="h-10 rounded-lg bg-white/[0.08] border-white/[0.1] text-white placeholder:text-white/30 focus:bg-white/[0.12] focus:ring-2 focus:ring-primary/30 focus:border-primary/30 transition-all pr-10 font-medium text-base"
                                     />
                                     <button
                                         type="button"
@@ -193,7 +193,7 @@ export default function Landing() {
                             <Button
                                 type="submit"
                                 disabled={isLoading}
-                                className="w-full h-11 bg-purple-600 hover:bg-purple-500 text-white rounded-lg font-semibold tracking-button text-sm shadow-lg shadow-purple-700/30 hover:shadow-purple-500/40 transition-all"
+                                className="w-full h-11 bg-primary hover:bg-primary/90 text-white rounded-lg font-semibold tracking-button text-sm shadow-xl shadow-primary/30 hover:shadow-primary/40 transition-all"
                             >
                                 {isLoading ? (
                                     <Loader2 className="w-4 h-4 animate-spin" />

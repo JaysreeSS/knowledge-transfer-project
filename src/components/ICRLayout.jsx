@@ -23,8 +23,12 @@ import {
     AlertCircle,
     ChevronLeft,
     Sun,
-    Moon
+    Moon,
+    HelpCircle,
+    Zap,
+    PlayCircle
 } from 'lucide-react';
+import GuidedTour from './GuidedTour';
 import { useTheme } from '../contexts/ThemeContext.jsx';
 import {
     DropdownMenu,
@@ -43,6 +47,7 @@ import { useProjects } from '../contexts/ProjectContext.jsx';
 import { useAdmin } from '../contexts/AdminContext.jsx';
 import { useNotifications } from '../contexts/NotificationContext.jsx';
 import ScrollToTop from './ScrollToTop';
+import LoadingScreen from './LoadingScreen.jsx';
 import { getAvatarUrl } from '../lib/utils';
 import logo from '../assets/logo.png';
 import logoSmall from '../assets/logo-small.png';
@@ -50,20 +55,23 @@ import logoLight from '/favicon-light.png';
 
 export default function ICRLayout() {
     const { user, logout } = useAuth();
-    const { projects } = useProjects();
+    const { projects, loading } = useProjects();
     const { settings } = useAdmin();
     const { theme, toggleTheme } = useTheme();
-    const { getModuleNotifications, deleteNotification, clearNotifications, hasUnread } = useNotifications();
+    const { getModuleNotifications, markAsRead, markAllAsRead, hasUnread } = useNotifications();
     const navigate = useNavigate();
     const location = useLocation();
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+    const [manualTourCount, setManualTourCount] = useState(0);
+
+    if (loading) return <LoadingScreen />;
 
     // Get ICR notifications from the persistent Supabase store
     const notifications = getModuleNotifications('icr');
     const unread = hasUnread('icr');
 
     const handleClearNotifications = () => {
-        clearNotifications('icr');
+        markAllAsRead('icr');
     };
 
     const handleLogout = async () => {
@@ -83,7 +91,7 @@ export default function ICRLayout() {
         if (words.length > 1) {
             return (
                 <>
-                    {words[0]}<span className="bg-clip-text text-transparent bg-gradient-to-r from-purple-400 via-indigo-400 to-purple-400 animate-gradient-x">{words.slice(1).join(' ')}</span>
+                    {words[0]} <span className="bg-clip-text text-transparent bg-gradient-to-r from-primary via-purple-400 to-primary dark:from-primary dark:via-white/50 dark:to-primary/80 animate-gradient-x font-bold">{words.slice(1).join(' ')}</span>
                 </>
             );
         }
@@ -118,12 +126,14 @@ export default function ICRLayout() {
                                 return (
                                     <button
                                         key={item.path}
+                                        id={`icr-nav-${item.label.toLowerCase().replace(' ', '-')}`}
                                         onClick={() => navigate(item.path)}
-                                        className={`text-sm font-medium transition-all px-4 py-2 rounded-xl relative group ${isActive
+                                        className={`text-sm font-medium transition-all px-4 py-2 rounded-xl relative group flex items-center gap-2.5 ${isActive
                                             ? 'bg-primary/5 dark:bg-primary/20 text-primary font-semibold ring-1 ring-primary/20 shadow-sm'
                                             : 'text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-50/80 dark:hover:bg-slate-800/50'
                                             }`}
                                     >
+                                        <item.icon className={`w-4 h-4 transition-colors ${isActive ? 'text-primary' : 'text-slate-400 group-hover:text-slate-500'}`} />
                                         {item.label}
                                     </button>
                                 );
@@ -132,10 +142,30 @@ export default function ICRLayout() {
                     </div>
 
                     <div className="flex items-center gap-5">
-                        {/* Mobile Menu Toggle (hidden on lg) */}
                         <button onClick={() => setIsMobileMenuOpen(true)} className="lg:hidden p-2 text-slate-400 hover:text-slate-900 transition-colors">
                             <Menu className="w-5 h-5" />
                         </button>
+
+                        {/* Help & Support Menu */}
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <button
+                                    id="icr-help-trigger"
+                                    className="p-2.5 rounded-lg hover:bg-primary/5 dark:hover:bg-primary/10 hover:border-primary/20 dark:hover:border-primary/30 transition-all group outline-none"
+                                    title="Help & Support"
+                                >
+                                    <HelpCircle className="w-5 h-5 text-slate-400 group-hover:text-primary transition-colors" />
+                                </button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" sideOffset={14} className="w-56 p-2 shadow-2xl border-slate-100 dark:border-slate-800 dark:bg-slate-900">
+                                <DropdownMenuItem 
+                                    className="rounded-lg gap-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 focus:bg-primary/5 focus:text-primary cursor-pointer transition-colors"
+                                    onClick={() => setManualTourCount(prev => prev + 1)}
+                                >
+                                    <Zap size={16} /> Start Guided Tour
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
 
                         {/* Theme Toggle */}
                         <button
@@ -154,15 +184,17 @@ export default function ICRLayout() {
                             <PopoverTrigger asChild>
                                 <button
                                     onClick={() => { }}
+                                    id="icr-notifications"
                                     className="relative flex items-center gap-2 rounded-lg hover:bg-primary/5 dark:hover:bg-primary/10 hover:border-primary/20 dark:hover:border-primary/30 transition-all group outline-none text-left p-2.5"
                                 >
                                     <Bell className="w-5 h-5 text-slate-400 group-hover:text-primary transition-colors shrink-0" />
                                     {notifications.length > 0 && unread && (
-                                        <span className={`absolute bg-red-500 border-white rounded-full top-3 right-3 w-2 h-2 border-2`}></span>
-                                    )}
+                                    <span className="absolute top-2.5 right-2.5 w-2 h-2 rounded-full bg-red-500 border border-white dark:border-slate-800 shadow-sm animate-in zoom-in duration-300">
+                                    </span>
+                                )}
                                 </button>
                             </PopoverTrigger>
-                            <PopoverContent className="w-[380px] p-0 dark:bg-slate-900 dark:border-slate-700" align="end" sideOffset={12}>
+                            <PopoverContent className="w-[calc(100vw-32px)] sm:w-[380px] p-0 dark:bg-slate-900 dark:border-slate-700 mx-auto" align="end" sideOffset={12} collisionPadding={16}>
                                 <div className="p-4 border-b border-slate-50 dark:border-slate-700/60 flex items-center justify-between bg-slate-50/50 dark:bg-slate-800">
                                     <div className="flex items-center gap-2">
                                         <span className="text-xs font-semibold uppercase tracking-widest text-slate-400">Notifications</span>
@@ -186,7 +218,16 @@ export default function ICRLayout() {
                                     <div className="flex flex-col">
                                         {notifications.length > 0 ? (
                                             notifications.map((n) => (
-                                                <div key={n.id} className="p-4 hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors border-b border-slate-50 dark:border-slate-700/40 cursor-pointer group/item" onClick={() => navigate(n.type === 'clarify' ? `/icr/handovers/${n.project_id}` : `/icr/onboardings/${n.project_id}`)}>
+                                                <div key={n.id} className="p-4 hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors border-b border-slate-50 dark:border-slate-700/40 cursor-pointer group/item" onClick={() => {
+                                                    const proj = projects.find(p => p.id === n.project_id);
+                                                    const member = proj?.members?.find(m => m.userId === user?.id);
+                                                    if (member) {
+                                                        if (member.ktRole === 'Receiver') navigate(`/icr/onboardings/${n.project_id}`);
+                                                        else navigate(`/icr/handovers/${n.project_id}`);
+                                                    } else {
+                                                        navigate(n.type === 'clarify' ? `/icr/handovers/${n.project_id}` : `/icr/onboardings/${n.project_id}`);
+                                                    }
+                                                }}>
                                                     <div className="flex gap-4">
                                                         <Avatar className="w-9 h-9 border border-purple-100 shadow-sm ring-2 ring-purple-50">
                                                             <AvatarImage src={getAvatarUrl(n.project_name || n.title)} />
@@ -197,7 +238,7 @@ export default function ICRLayout() {
                                                                 <span className="text-sm font-semibold text-slate-900 dark:text-slate-100 tracking-tight">{n.project_name || n.title}</span>
                                                                 <span className="text-xs text-slate-400 font-medium">{new Date(n.created_at).toLocaleDateString()}</span>
                                                             </div>
-                                                            <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-1 leading-relaxed">
+                                                            <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-1 leading-relaxed" title={n.body || n.title}>
                                                                 {n.body || n.title}
                                                             </p>
                                                             <div className="mt-2 text-xs font-semibold text-slate-400 uppercase tracking-widest flex items-center gap-1.5 ring-1 ring-slate-100 dark:ring-slate-700 w-fit px-2 py-0.5 rounded bg-white dark:bg-slate-800">
@@ -207,7 +248,7 @@ export default function ICRLayout() {
                                                         <button
                                                             onClick={(e) => {
                                                                 e.stopPropagation();
-                                                                deleteNotification(n.id);
+                                                                markAsRead(n.id);
                                                             }}
                                                             className="text-slate-300 hover:text-red-500 opacity-0 group-hover/item:opacity-100 transition-all"
                                                         >
@@ -240,9 +281,9 @@ export default function ICRLayout() {
                                         </AvatarFallback>
                                     </Avatar>
                                     {/* Tooltip on Hover */}
-                                    <div className="absolute top-[120%] right-0 bg-slate-900/90 dark:bg-slate-800/95 backdrop-blur-md text-white py-2 px-4 rounded-xl shadow-2xl opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 pointer-events-none transition-all duration-300 z-50 whitespace-nowrap border border-white/10 text-right">
+                                    <div className="absolute top-[120%] right-0 bg-slate-900/90 dark:bg-slate-800/95 backdrop-blur-md text-white py-2 px-4 rounded-xl shadow-2xl opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 pointer-events-none transition-all duration-300 z-50 whitespace-nowrap border border-white/10">
                                         <p className="text-sm font-semibold leading-none">{user?.name}</p>
-                                        <p className="text-[10px] font-semibold text-slate-400 capitalize tracking-tight mt-1.5">{user?.role || 'Member'}</p>
+                                        <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mt-2">{user?.role || 'Member'}</p>
                                         {/* Tooltip Arrow */}
                                         <div className="absolute -top-1.5 right-4 w-3 h-3 bg-slate-900/90 dark:bg-slate-800/95 rotate-45 border-l border-t border-white/10" />
                                     </div>
@@ -342,6 +383,12 @@ export default function ICRLayout() {
                     <Outlet />
                 </div>
             </main>
+            {/* Role-based Guided Tour */}
+            {console.log("[ICRLayout] Injecting GuidedTour...")}
+            <GuidedTour 
+                role={user?.role || 'Member'} 
+                manualStartCount={manualTourCount} 
+            />
         </div>
     );
 }

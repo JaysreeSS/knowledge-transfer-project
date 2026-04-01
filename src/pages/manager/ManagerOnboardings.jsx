@@ -21,20 +21,23 @@ export default function ManagerOnboardings() {
 
     const [searchTerm, setSearchTerm] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
+    const [sortBy, setSortBy] = useState('Newest First');
     const itemsPerPage = 5;
 
-    // Filter projects where user is the Receiver (ICR)
+    // Filter projects where user is the Receiver (ICR) OR the upcoming manager in a MANAGER transition
     const myProjects = projects.filter(p => 
-        p.members.some(m => m.userId === user.id && m.ktRole === 'Receiver')
+        p.members.some(m => m.userId === user.id && m.ktRole === 'Receiver') ||
+        (p.transitionType === 'MANAGER' && p.managerId === user.id)
     );
 
     const sortedProjects = [...myProjects].sort((a, b) => {
-        const statusOrder = { 'In Progress': 0, 'Ready': 0, 'Review': 0, 'Completed': 1, 'Signed Off': 1 };
-        const statusA = statusOrder[a.status] ?? 0;
-        const statusB = statusOrder[b.status] ?? 0;
-        
-        if (statusA !== statusB) return statusA - statusB;
-        return new Date(b.created_at || 0) - new Date(a.created_at || 0);
+        if (sortBy === 'Newest First') return new Date(b.created_at || b.createdAt || 0) - new Date(a.created_at || a.createdAt || 0);
+        if (sortBy === 'Oldest First') return new Date(a.created_at || a.createdAt || 0) - new Date(b.created_at || b.createdAt || 0);
+        if (sortBy === 'Deadline') return new Date(a.deadline || '9999-12-31') - new Date(b.deadline || '9999-12-31');
+        if (sortBy === 'Completion %') return (b.completion || 0) - (a.completion || 0);
+        if (sortBy === 'Status') return (a.status || '').localeCompare(b.status || '');
+        if (sortBy === 'Recently Updated') return new Date(b.updated_at || b.createdAt || 0) - new Date(a.updated_at || a.createdAt || 0);
+        return 0;
     });
 
     const filteredProjects = sortedProjects.filter(p => 
@@ -70,6 +73,18 @@ export default function ManagerOnboardings() {
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
                     </div>
+                    <select 
+                        className="h-10 px-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg text-sm outline-none font-medium text-slate-600 dark:text-slate-300 focus:ring-primary/20 transition-all"
+                        value={sortBy}
+                        onChange={(e) => setSortBy(e.target.value)}
+                    >
+                        <option>Newest First</option>
+                        <option>Oldest First</option>
+                        <option>Deadline</option>
+                        <option>Completion %</option>
+                        <option>Status</option>
+                        <option>Recently Updated</option>
+                    </select>
                 </div>
             </header>
 
@@ -100,28 +115,20 @@ export default function ManagerOnboardings() {
                                             const ktRole = p.members.find(m => m.userId === user.id)?.ktRole;
                                             
                                             return (
-                                                <tr key={p.id} className="group hover:bg-slate-50/50 dark:hover:bg-slate-900/40 transition-colors cursor-pointer" onClick={() => navigate(`/manager/projects/${p.id}`)}>
+                                                <tr key={p.id} className="group hover:bg-slate-50/50 dark:hover:bg-slate-900/40 transition-colors cursor-pointer" onClick={() => navigate(`/manager/my-onboardings/${p.id}`)}>
                                                     <td className="p-4">
-                                                        <div className="flex items-center gap-3">
-                                                            <div className="w-10 h-10 rounded-lg bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center text-orange-600 dark:text-orange-400 border border-orange-200/50 dark:border-orange-800 transition-colors">
-                                                                <Inbox className="w-5 h-5" />
-                                                            </div>
-                                                            <div className="min-w-0">
-                                                                <p className="text-sm font-semibold text-slate-900 dark:text-slate-200 truncate">{p.name}</p>
-                                                                <p className="text-xs text-slate-500 dark:text-slate-400 font-medium truncate max-w-[200px]">{p.description || "Knowledge transition details."}</p>
-                                                            </div>
-                                                        </div>
+                                                        <p className="text-sm font-semibold text-slate-900 dark:text-slate-200 transition-colors truncate">{p.name}</p>
                                                     </td>
                                                     <td className="p-4">
                                                         <Badge variant="soft" className="px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 rounded transition-colors">
-                                                            {ktRole}
+                                                            {p.transitionType === 'MANAGER' && p.managerId === user.id ? 'Upcoming Manager' : ktRole}
                                                         </Badge>
                                                     </td>
-                                                    <td className="p-4">
+                                                    <td className="p-4 transition-colors text-nowrap">
                                                         <div className="flex items-center gap-2">
-                                                            <div className={`w-1.5 h-1.5 rounded-full ${p.status === 'Completed' || p.status === 'Signed Off' ? 'bg-emerald-500' : 'bg-blue-500'}`} />
-                                                            <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-                                                                {p.status === 'Completed' || p.status === 'Signed Off' ? 'Signed Off' : (p.status || 'Active')}
+                                                            <div className={`w-1.5 h-1.5 rounded-full ${(p.status === 'Completed' || p.status === 'Signed Off') ? 'bg-emerald-500' : p.status === 'In Progress' ? 'bg-blue-500' : 'bg-slate-400'}`} />
+                                                            <span className="text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-widest">
+                                                                {p.status === 'Completed' || p.status === 'Signed Off' ? 'Signed off' : (p.status || 'Active')}
                                                             </span>
                                                         </div>
                                                     </td>

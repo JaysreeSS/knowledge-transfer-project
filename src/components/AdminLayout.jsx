@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Users, FileText, FolderKanban, Bell, ChevronLeft, ChevronRight, User, LogOut, Check, X, Search, Settings, Sun, Moon } from 'lucide-react';
-import { useAuth } from '../contexts/AuthContext';
+import { LayoutDashboard, Users, FileText, FolderKanban, Bell, ChevronLeft, ChevronRight, User, LogOut, Check, X, Search, Settings, Sun, Moon, HelpCircle, Zap, PlayCircle } from 'lucide-react';
+import { useAuth, useAuth as useAuthTour } from '../contexts/AuthContext';
+import GuidedTour from './GuidedTour';
 import { useTheme } from '../contexts/ThemeContext';
 import { Button } from "@/components/ui/button";
 import logo from '../assets/logo.png';
@@ -17,27 +18,22 @@ import { useProjects } from '@/contexts/ProjectContext';
 import { useAdmin } from '@/contexts/AdminContext';
 import { useNotifications } from '@/contexts/NotificationContext';
 import ScrollToTop from './ScrollToTop';
+import LoadingScreen from './LoadingScreen.jsx';
 
 export default function AdminLayout() {
     const [collapsed, setCollapsed] = useState(true);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const { logout, user } = useAuth();
-    const { projects } = useProjects();
+    const { projects, loading } = useProjects();
+    
     const { settings } = useAdmin();
     const { theme, toggleTheme } = useTheme();
-    const { getModuleNotifications, deleteNotification, clearNotifications, hasUnread } = useNotifications();
+    const { getModuleNotifications, markAsRead, markAllAsRead, hasUnread } = useNotifications();
+    const [manualTourCount, setManualTourCount] = useState(0);
     const navigate = useNavigate();
     const location = useLocation();
     const mainRef = React.useRef(null);
-
-    // Get admin notifications from the persistent Supabase store
-    const notifications = getModuleNotifications('admin');
-    const unread = hasUnread('admin');
-
-    const handleClearNotifications = () => {
-        clearNotifications('admin');
-    };
-
+    
     // Close mobile menu on navigation
     React.useEffect(() => {
         setIsMobileMenuOpen(false);
@@ -48,6 +44,16 @@ export default function AdminLayout() {
             mainRef.current.scrollTo(0, 0);
         }
     }, [location.pathname]);
+
+    if (loading) return <LoadingScreen />;
+
+    // Get admin notifications from the persistent Supabase store
+    const notifications = getModuleNotifications('admin');
+    const unread = hasUnread('admin');
+
+    const handleClearNotifications = () => {
+        markAllAsRead('admin');
+    };
 
     const navItems = [
         { path: '/admin', label: 'Dashboard', icon: LayoutDashboard, exact: true },
@@ -68,7 +74,7 @@ export default function AdminLayout() {
         if (words.length > 1) {
             return (
                 <>
-                    {words[0]}<span className="bg-clip-text text-transparent bg-gradient-to-r from-purple-400 via-indigo-400 to-purple-400 animate-gradient-x">{words.slice(1).join(' ')}</span>
+                    {words[0]} <span className="bg-clip-text text-transparent bg-gradient-to-r from-primary via-purple-400 to-primary dark:from-primary dark:via-white/50 dark:to-primary/80 animate-gradient-x font-bold">{words.slice(1).join(' ')}</span>
                 </>
             );
         }
@@ -76,7 +82,7 @@ export default function AdminLayout() {
     })();
 
     return (
-        <div className="flex flex-col h-screen bg-slate-50 dark:bg-slate-950 overflow-hidden font-sans relative transition-colors duration-300">
+        <div className="flex flex-col min-h-screen bg-slate-50 dark:bg-slate-950 font-sans relative transition-colors duration-300">
             {/* Extremely subtle galactic glow spot for light mode */}
             <div className="absolute -top-24 -left-24 w-96 h-96 bg-primary/5 blur-[120px] pointer-events-none" />
 
@@ -108,6 +114,27 @@ export default function AdminLayout() {
                 </div>
 
                 <div className="flex items-center gap-1.5 h-full">
+                    {/* Help & Support */}
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <button
+                                id="admin-help-trigger"
+                                className="w-10 h-10 flex items-center justify-center rounded-xl text-slate-400 hover:text-primary hover:bg-primary/5 dark:hover:bg-primary/10 transition-all group"
+                                title="Help & Support"
+                            >
+                                <HelpCircle className="w-5 h-5" />
+                            </button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" sideOffset={14} className="w-56 p-2 shadow-2xl border-slate-100 dark:border-slate-800 dark:bg-slate-900">
+                            <DropdownMenuItem 
+                                className="rounded-lg gap-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 focus:bg-primary/5 focus:text-primary cursor-pointer transition-colors"
+                                onClick={() => setManualTourCount(prev => prev + 1)}
+                            >
+                                <Zap size={16} /> Start Guided Tour
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+
                     {/* Theme Toggle */}
                     <button
                         onClick={toggleTheme}
@@ -123,10 +150,11 @@ export default function AdminLayout() {
                     {/* Notification Bell */}
                     <Popover>
                         <PopoverTrigger asChild>
-                            <button className="relative w-10 h-10 flex items-center justify-center rounded-xl text-slate-400 hover:text-primary hover:bg-primary/5 dark:hover:bg-primary/10 transition-all group">
+                            <button id="admin-notifications" className="relative w-10 h-10 flex items-center justify-center rounded-xl text-slate-400 hover:text-primary hover:bg-primary/5 dark:hover:bg-primary/10 transition-all group">
                                 <Bell className="w-5 h-5 transition-colors" />
                                 {notifications.length > 0 && unread && (
-                                    <span className="absolute top-2.5 right-2.5 w-2 h-2 bg-red-500 border-2 border-white dark:border-slate-900 rounded-full"></span>
+                                    <span className="absolute top-2.5 right-2.5 w-2 h-2 rounded-full bg-red-500 border border-white dark:border-slate-800 shadow-sm animate-in zoom-in duration-300">
+                                    </span>
                                 )}
                             </button>
                         </PopoverTrigger>
@@ -148,7 +176,7 @@ export default function AdminLayout() {
                                                     </div>
                                                     <div className="flex-1 min-w-0">
                                                         <p className="text-xs font-semibold text-slate-900 dark:text-slate-100 truncate">{n.project_name || n.title}</p>
-                                                        <p className="text-[10px] text-slate-500 dark:text-slate-400 line-clamp-1">{n.body || n.title}</p>
+                                                        <p className="text-[10px] text-slate-500 dark:text-slate-400 line-clamp-1" title={n.body || n.title}>{n.body || n.title}</p>
                                                     </div>
                                                 </div>
                                             </div>
@@ -201,15 +229,13 @@ export default function AdminLayout() {
                 </div>
             </header>
 
-            <div className={`flex flex-1 overflow-hidden relative ${settings?.sidebar_position === 'right' ? 'flex-row-reverse' : 'flex-row'}`}>
-                {/* Desktop Sidebar Placeholder - keep main content correctly positioned */}
-                <div className="w-20 hidden md:block flex-none" />
+            <div className={`flex flex-1 relative ${settings?.sidebar_position === 'right' ? 'flex-row-reverse' : 'flex-row'}`}>
 
                 {/* Desktop Sidebar */}
                 <aside
                     onMouseEnter={() => setCollapsed(false)}
                     onMouseLeave={() => setCollapsed(true)}
-                    className={`z-40 shadow-xl transition-all duration-300 hidden md:flex flex-col absolute top-0 bottom-0 ${
+                    className={`z-40 shadow-xl transition-all duration-300 hidden md:flex flex-col sticky top-16 h-[calc(100vh-64px)] ${
                         settings?.sidebar_position === 'right' ? 'right-0 border-l' : 'left-0 border-r'
                     } border-slate-200/60 dark:border-slate-800/60 ${
                         (settings?.sidebar_style || localStorage.getItem('a_sidebar_style')) === 'solid' 
@@ -228,6 +254,7 @@ export default function AdminLayout() {
                             return (
                                 <NavLink
                                     key={item.path}
+                                    id={`admin-nav-${item.label.toLowerCase()}`}
                                     to={item.path}
                                     className={`
                                         flex items-center w-full px-5 py-3 rounded-xl transition-all duration-200 group relative
@@ -260,7 +287,7 @@ export default function AdminLayout() {
                 </aside>
 
                 {/* Main Content Area */}
-                <main ref={mainRef} className="flex-1 overflow-x-auto overflow-y-auto bg-slate-50 dark:bg-slate-950 relative flex flex-col transition-colors duration-300">
+                <main ref={mainRef} className="flex-1 bg-slate-50 dark:bg-slate-950 relative flex flex-col transition-colors duration-300">
                     <div className="flex-1">
                         <Outlet />
                     </div>
@@ -330,6 +357,13 @@ export default function AdminLayout() {
                     </Button>
                 </div>
             </aside>
+
+            {/* Role-based Guided Tour */}
+            {console.log("[AdminLayout] Injecting GuidedTour...")}
+            <GuidedTour 
+                role={user?.role || 'System Admin'} 
+                manualStartCount={manualTourCount} 
+            />
         </div>
     );
 }

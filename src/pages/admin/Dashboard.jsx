@@ -27,15 +27,15 @@ export default function AdminDashboard() {
             title: "Total Users",
             value: totalAssociates,
             icon: Users,
-            color: "text-blue-600",
-            bg: "bg-blue-50/80"
+            color: "text-slate-600 dark:text-slate-400",
+            bg: "bg-slate-50/80 dark:bg-slate-900/50"
         },
         {
             title: "Active Projects",
             value: activeProjects,
             icon: FolderKanban,
-            color: "text-purple-600",
-            bg: "bg-purple-50/80"
+            color: "text-primary",
+            bg: "bg-primary/10"
         },
         {
             title: "Templates",
@@ -74,13 +74,13 @@ export default function AdminDashboard() {
             {/* Page Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 transition-colors">
                 <div className="space-y-1 transition-colors">
-                    <h1 className="text-2xl font-semibold tracking-page-title text-slate-900 dark:text-slate-100 transition-colors">Admin dashboard</h1>
+                    <h1 id="admin-welcome-step" className="text-2xl font-semibold tracking-page-title text-slate-900 dark:text-slate-100 transition-colors block w-fit">Admin dashboard</h1>
                     <p className="text-slate-500 dark:text-slate-400 text-sm font-medium transition-colors">Key performance metrics and project activity overview.</p>
                 </div>
             </div>
 
             {/* Stats Grid */}
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            <div id="admin-stats-grid" className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                 {stats.map((stat, index) => (
                     <Card key={index} className="border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-md transition-all duration-300 bg-white dark:bg-slate-800/50 overflow-hidden relative group">
                         <CardHeader className="p-6 flex flex-row items-center justify-between space-y-0 pb-2 transition-colors">

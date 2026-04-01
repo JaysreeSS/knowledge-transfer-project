@@ -7,20 +7,20 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import {
     Search,
-    Send,
     ChevronRight,
     ChevronLeft,
     ShieldAlert
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 
-export default function MyHandovers() {
+export default function ManagerHandovers() {
     const { user } = useAuth();
     const { projects } = useProjects();
     const navigate = useNavigate();
 
     const [searchTerm, setSearchTerm] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
+    const [sortBy, setSortBy] = useState('Newest First');
     const itemsPerPage = 5;
 
     // Filter projects where user is Initiator, Contributor, or assigned to a section
@@ -30,12 +30,12 @@ export default function MyHandovers() {
     );
 
     const sortedProjects = [...myProjects].sort((a, b) => {
-        const statusOrder = { 'In Progress': 0, 'Ready': 0, 'Review': 0, 'Completed': 1, 'Signed Off': 1 };
-        const statusA = statusOrder[a.status] ?? 0;
-        const statusB = statusOrder[b.status] ?? 0;
-
-        if (statusA !== statusB) return statusA - statusB;
-        return new Date(b.created_at || 0) - new Date(a.created_at || 0);
+        if (sortBy === 'Newest First') return new Date(b.created_at || b.createdAt || 0) - new Date(a.created_at || a.createdAt || 0);
+        if (sortBy === 'Oldest First') return new Date(a.created_at || a.createdAt || 0) - new Date(b.created_at || b.createdAt || 0);
+        if (sortBy === 'Completion %') return (b.completion || 0) - (a.completion || 0);
+        if (sortBy === 'Status') return (a.status || '').localeCompare(b.status || '');
+        if (sortBy === 'Recently Updated') return new Date(b.updated_at || b.createdAt || 0) - new Date(a.updated_at || a.createdAt || 0);
+        return 0;
     });
 
     const filteredProjects = sortedProjects.filter(p =>
@@ -58,7 +58,7 @@ export default function MyHandovers() {
         <div className="px-8 md:px-12 py-6 max-w-7xl mx-auto space-y-5 animate-in fade-in duration-700 font-sans transition-colors">
             <header className="flex flex-col md:flex-row md:items-center justify-between gap-10 transition-colors">
                 <div className="space-y-1 transition-colors">
-                    <h1 className="text-2xl font-semibold tracking-page-title text-slate-900 dark:text-slate-100 transition-colors">My handovers</h1>
+                    <h1 id="manager-handovers-header" className="text-2xl font-semibold tracking-page-title text-slate-900 dark:text-slate-100 transition-colors">My handovers</h1>
                     <p className="text-slate-500 dark:text-slate-400 font-medium text-sm leading-relaxed max-w-lg transition-colors">Manage sections assigned to you for contribution.</p>
                 </div>
                 <div className="flex items-center gap-4 transition-colors">
@@ -71,6 +71,17 @@ export default function MyHandovers() {
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
                     </div>
+                    <select 
+                        className="h-10 px-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg text-sm outline-none font-medium text-slate-600 dark:text-slate-300 focus:ring-primary/20 transition-all"
+                        value={sortBy}
+                        onChange={(e) => setSortBy(e.target.value)}
+                    >
+                        <option>Newest First</option>
+                        <option>Oldest First</option>
+                        <option>Completion %</option>
+                        <option>Status</option>
+                        <option>Recently Updated</option>
+                    </select>
                 </div>
             </header>
 
@@ -105,17 +116,7 @@ export default function MyHandovers() {
                                             return (
                                                 <tr key={p.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-900/50 transition-all cursor-pointer group divide-x-0" onClick={() => navigate(`/manager/my-handovers/${p.id}`)}>
                                                     <td className="p-4 py-5 transition-colors">
-                                                        <div className="flex flex-col gap-1 transition-colors">
-                                                            <span className="text-sm font-semibold text-slate-800 dark:text-slate-200 group-hover:text-primary dark:group-hover:text-primary transition-colors">{p.name}</span>
-                                                            <Badge variant="outline" className={`w-fit rounded-lg px-2 py-0 text-xs font-medium uppercase tracking-label border transition-colors ${p.lifecycleMode === 'ACTIVE'
-                                                                ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 border-indigo-100 dark:border-indigo-800'
-                                                                : p.lifecycleMode === 'REVERSE_KT'
-                                                                    ? 'bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 border-amber-100 dark:border-amber-800'
-                                                                    : 'bg-slate-50 dark:bg-slate-900 text-slate-400 dark:text-slate-500 border-slate-200 dark:border-slate-800'
-                                                                }`}>
-                                                                {p.lifecycleMode}
-                                                            </Badge>
-                                                        </div>
+                                                        <p className="text-sm font-semibold text-slate-800 dark:text-slate-200 transition-colors truncate">{p.name}</p>
                                                     </td>
                                                     <td className="p-4 transition-colors">
                                                         <span className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-label bg-slate-100 dark:bg-slate-900 px-2 py-1 rounded-md border dark:border-slate-800 transition-colors">
@@ -123,13 +124,11 @@ export default function MyHandovers() {
                                                         </span>
                                                     </td>
                                                     <td className="p-4 transition-colors">
-                                                        <div className={`px-2 py-1 rounded-md text-xs font-medium uppercase tracking-label w-fit border transition-colors ${(status === 'Completed' || status === 'Signed Off')
-                                                            ? 'bg-emerald-50 dark:bg-emerald-950/20 text-emerald-600 dark:text-emerald-400 border-emerald-100 dark:border-emerald-800'
-                                                            : status === 'In Progress'
-                                                                ? 'bg-blue-50 dark:bg-blue-950/20 text-blue-600 dark:text-blue-400 border-blue-100 dark:border-blue-800'
-                                                                : 'bg-slate-50 dark:bg-slate-900 text-slate-400 dark:text-slate-500 border-slate-200 dark:border-slate-800'
-                                                            }`}>
-                                                            {status === 'Completed' || status === 'Signed Off' ? 'Signed off' : (status || 'Active')}
+                                                        <div className="flex items-center gap-2">
+                                                            <div className={`w-1.5 h-1.5 rounded-full ${(status === 'Completed' || status === 'Signed Off') ? 'bg-emerald-500' : status === 'In Progress' ? 'bg-blue-500' : 'bg-slate-400'}`} />
+                                                            <span className="text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-widest">
+                                                                {status === 'Completed' || status === 'Signed Off' ? 'Signed off' : (status || 'Active')}
+                                                            </span>
                                                         </div>
                                                     </td>
                                                     <td className="p-4 transition-colors">

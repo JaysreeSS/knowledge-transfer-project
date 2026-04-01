@@ -141,6 +141,17 @@
   @apply bg-slate-900/70 backdrop-blur-lg border border-white/10 shadow-xl;
 }
 
+@keyframes gradient-x {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.animate-gradient-x {
+  background-size: 200% auto;
+  animation: gradient-x 3s linear infinite;
+}
+
 
 /* Custom Scrollbar */
 ::-webkit-scrollbar {

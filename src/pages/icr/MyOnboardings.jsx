@@ -19,6 +19,7 @@ export default function MyOnboardings() {
 
     const [searchTerm, setSearchTerm] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
+    const [sortBy, setSortBy] = useState('Newest First');
     const itemsPerPage = 5;
 
     // Filter projects where user is Receiver
@@ -27,12 +28,12 @@ export default function MyOnboardings() {
     );
 
     const sortedProjects = [...myProjects].sort((a, b) => {
-        const statusOrder = { 'In Progress': 0, 'Ready': 0, 'Review': 0, 'Completed': 1, 'Signed Off': 1 };
-        const statusA = statusOrder[a.status] ?? 0;
-        const statusB = statusOrder[b.status] ?? 0;
-
-        if (statusA !== statusB) return statusA - statusB;
-        return new Date(b.created_at || 0) - new Date(a.created_at || 0);
+        if (sortBy === 'Newest First') return new Date(b.created_at || b.createdAt || 0) - new Date(a.created_at || a.createdAt || 0);
+        if (sortBy === 'Oldest First') return new Date(a.created_at || a.createdAt || 0) - new Date(b.created_at || b.createdAt || 0);
+        if (sortBy === 'Completion %') return (b.completion || 0) - (a.completion || 0);
+        if (sortBy === 'Status') return (a.status || '').localeCompare(b.status || '');
+        if (sortBy === 'Recently Updated') return new Date(b.updated_at || b.createdAt || 0) - new Date(a.updated_at || a.createdAt || 0);
+        return 0;
     });
 
     const filteredProjects = sortedProjects.filter(p =>
@@ -52,10 +53,10 @@ export default function MyOnboardings() {
     );
 
     return (
-        <div className="px-4 sm:px-8 md:px-12 py-6 max-w-7xl mx-auto space-y-5 animate-in fade-in duration-700 font-sans transition-colors">
+        <div className="px-4 sm:px-8 md:px-12 py-6 max-w-7xl mx-auto space-y-5 animate-in fade-in slide-in-from-bottom-2 duration-500 font-sans transition-colors">
             <header className="flex flex-col md:flex-row md:items-center justify-between gap-10">
                 <div className="space-y-1">
-                    <h1 className="text-2xl font-semibold text-slate-900 dark:text-slate-100 tracking-tight transition-colors">My Onboardings</h1>
+                    <h1 className="text-2xl font-semibold text-slate-900 dark:text-slate-100 tracking-page-title transition-colors">My Onboardings</h1>
                     <p className="text-slate-500 dark:text-slate-400 font-medium text-sm leading-relaxed max-w-lg transition-colors">Track your learning progress and review assigned modules.</p>
                 </div>
                 <div className="flex items-center gap-4">
@@ -68,6 +69,17 @@ export default function MyOnboardings() {
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
                     </div>
+                    <select 
+                        className="h-10 px-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg text-sm outline-none font-medium text-slate-600 dark:text-slate-300 focus:ring-primary/20 transition-all"
+                        value={sortBy}
+                        onChange={(e) => setSortBy(e.target.value)}
+                    >
+                        <option>Newest First</option>
+                        <option>Oldest First</option>
+                        <option>Completion %</option>
+                        <option>Status</option>
+                        <option>Recently Updated</option>
+                    </select>
                 </div>
             </header>
 
@@ -81,66 +93,62 @@ export default function MyOnboardings() {
                     </Card>
                 ) : (
                     <div className="space-y-6">
-                        <div className="overflow-x-auto scrollbar-hide">
-                            <table className="w-full text-left border-collapse min-w-[700px]">
-                                <thead className="bg-slate-50/50 dark:bg-slate-900/50 border-b border-slate-100 dark:border-slate-800">
-                                    <tr>
-                                        <th className="p-4 text-xs font-medium uppercase tracking-label text-slate-400 dark:text-slate-500">Project name</th>
-                                        <th className="p-4 text-xs font-medium uppercase tracking-label text-slate-400 dark:text-slate-500">Status</th>
-                                        <th className="p-4 text-xs font-medium uppercase tracking-label text-slate-400 dark:text-slate-500">Deadline</th>
-                                        <th className="p-4 text-xs font-medium uppercase tracking-label text-slate-400 dark:text-slate-500">Learning progress</th>
-                                        <th className="p-4 text-xs font-medium uppercase tracking-label text-slate-400 dark:text-slate-500 text-right"></th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-slate-100 dark:divide-slate-800 transition-colors">
-                                    {paginatedProjects.map((p) => {
-                                        const myRole = p.members.find(m => m.userId === user.id)?.ktRole;
-                                        const displayProgress = p.completion || 0;
-                                        const displayStatus = p.status || 'Not Started';
+                        <div className="bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 shadow-sm rounded-xl overflow-hidden backdrop-blur-sm">
+                            <div className="overflow-x-auto scrollbar-hide">
+                                <table className="w-full text-left border-collapse min-w-[700px]">
+                                    <thead className="bg-slate-50/50 dark:bg-slate-900/50 border-b border-slate-200 dark:border-slate-800 transition-colors">
+                                        <tr>
+                                            <th className="p-4 text-xs font-medium uppercase tracking-label text-slate-400 dark:text-slate-500">Project name</th>
+                                            <th className="p-4 text-xs font-medium uppercase tracking-label text-slate-400 dark:text-slate-500 text-center">Status</th>
+                                            <th className="p-4 text-xs font-medium uppercase tracking-label text-slate-400 dark:text-slate-500">Learning progress</th>
+                                            <th className="p-4 text-xs font-medium uppercase tracking-label text-slate-400 dark:text-slate-500 text-right"></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-slate-100 dark:divide-slate-800 transition-colors">
+                                        {paginatedProjects.map((p) => {
+                                            const myRole = p.members.find(m => m.userId === user.id)?.ktRole;
+                                            const displayProgress = p.completion || 0;
+                                            const displayStatus = p.status || 'Not Started';
 
-                                        return (
-                                            <tr key={p.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-900/50 transition-all cursor-pointer group" onClick={() => navigate(`/icr/onboardings/${p.id}`)}>
-                                                <td className="p-4 py-5">
-                                                    <span className="text-sm font-semibold text-slate-800 dark:text-slate-200 group-hover:text-primary transition-colors">{p.name}</span>
-                                                </td>
-                                                <td className="p-4">
-                                                    <div className={`px-2 py-1 rounded-md text-xs font-medium uppercase tracking-label w-fit border transition-colors ${(displayStatus === 'Completed' || displayStatus === 'Signed Off')
-                                                        ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 border-emerald-100 dark:border-emerald-800'
-                                                        : displayStatus === 'In Progress'
-                                                            ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 border-blue-100 dark:border-blue-800'
-                                                            : 'bg-slate-50 dark:bg-slate-900 text-slate-400 dark:text-slate-500 border-slate-200 dark:border-slate-800'
-                                                        }`}>
-                                                        {displayStatus === 'Completed' || displayStatus === 'Signed Off' ? 'Signed off' : (displayStatus || 'Active')}
-                                                    </div>
-                                                </td>
-                                                <td className="p-4">
-                                                    <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 transition-colors">
-                                                        {p.deadline ? new Date(p.deadline).toLocaleDateString() : 'N/A'}
-                                                    </span>
-                                                </td>
-                                                <td className="p-4">
-                                                    <div className="flex items-center gap-4">
-                                                        <div className="flex-1 w-24 h-1.5 bg-slate-100 dark:bg-slate-900 rounded-full overflow-hidden transition-colors">
-                                                            <div
-                                                                className={`h-full transition-all duration-1000 ${displayProgress === 100 ? 'bg-emerald-500' : 'bg-primary'}`}
-                                                                style={{ width: `${displayProgress}%` }}
-                                                            />
+                                            return (
+                                                <tr key={p.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-900/50 transition-colors cursor-pointer group" onClick={() => navigate(`/icr/onboardings/${p.id}`)}>
+                                                    <td className="p-4">
+                                                        <p className="text-sm font-semibold text-slate-900 dark:text-slate-200 transition-colors">{p.name}</p>
+                                                    </td>
+                                                    <td className="p-4">
+                                                        <div className="flex justify-center">
+                                                            <div className={`px-2 py-1 rounded text-[10px] font-bold uppercase tracking-label w-fit border ${(displayStatus === 'Completed' || displayStatus === 'Signed Off')
+                                                                ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 border-emerald-100 dark:border-emerald-800'
+                                                                : displayStatus === 'In Progress'
+                                                                    ? 'bg-primary/5 dark:bg-primary/20 text-primary dark:text-primary/90 border-primary/20 dark:border-primary/80'
+                                                                    : 'bg-slate-50 dark:bg-slate-900 text-slate-400 dark:text-slate-500 border-slate-200 dark:border-slate-800'
+                                                                }`}>
+                                                                {displayStatus === 'Completed' || displayStatus === 'Signed Off' ? 'Signed off' : (displayStatus || 'Active')}
+                                                            </div>
                                                         </div>
-                                                        <span className="text-xs font-medium text-slate-600 dark:text-slate-400 min-w-[30px] text-right transition-colors">{displayProgress}%</span>
-                                                    </div>
-                                                </td>
-                                                <td className="p-4 text-right">
-                                                    <div className="flex items-center justify-end">
-                                                        <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-slate-50 dark:bg-slate-900 text-slate-400 dark:text-slate-500 group-hover:bg-primary dark:group-hover:bg-primary/20 group-hover:text-white dark:group-hover:text-primary transition-all border dark:border-slate-800">
-                                                            <ChevronRight className="w-4 h-4 transition-colors" />
+                                                    </td>
+                                                    <td className="p-4">
+                                                        <div className="flex items-center gap-4">
+                                                            <div className="flex-1 w-32 h-1.5 bg-slate-100 dark:bg-slate-900 rounded-full overflow-hidden">
+                                                                <div
+                                                                    className={`h-full transition-all duration-1000 ${displayProgress === 100 ? 'bg-emerald-500' : 'bg-primary'}`}
+                                                                    style={{ width: `${displayProgress}%` }}
+                                                                />
+                                                            </div>
+                                                            <span className="text-[10px] font-bold text-slate-600 dark:text-slate-400 tabular-nums">{displayProgress}%</span>
                                                         </div>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        );
-                                    })}
-                                </tbody>
-                            </table>
+                                                    </td>
+                                                    <td className="p-4 text-right">
+                                                        <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg text-slate-400 hover:text-primary transition-all">
+                                                            <ChevronRight className="w-5 h-5" />
+                                                        </Button>
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })}
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
 
                         {/* Pagination Controls */}

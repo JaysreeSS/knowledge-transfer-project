@@ -21,7 +21,7 @@ export const ProjectProvider = ({ children }) => {
                     id,
                     user_id,
                     kt_role,
-                    users (name, role)
+                    users (name, role, avatar_url)
                 ),
                 project_sections (
                     id,
@@ -31,6 +31,9 @@ export const ProjectProvider = ({ children }) => {
                     status,
                     contributor_id,
                     order,
+                    clarity_score,
+                    clarity_suggestions,
+                    ai_quiz,
                     section_attachments (
                         id,
                         file_name,
@@ -55,6 +58,7 @@ export const ProjectProvider = ({ children }) => {
                     )
                 ),
                 lifecycle_mode,
+                transition_type,
                 transition_count,
                 receiver_section_progress (
                     id,
@@ -87,7 +91,8 @@ export const ProjectProvider = ({ children }) => {
                 managerId: p.manager_id,
                 managerName: p.manager_name,
                 createdAt: p.created_at,
-                lifecycleMode: p.lifecycle_mode || 'ACTIVE',
+                lifecycleMode: (p.lifecycle_mode || (p.status?.toLowerCase() === 'signed off' ? 'ACTIVE' : 'TRANSITION')).toUpperCase(),
+                transitionType: p.transition_type || 'INDIVIDUAL',
                 transitionCount: p.transition_count || 0,
                 members: (p.project_members || []).map(m => ({
                     id: m.id,
@@ -127,15 +132,21 @@ export const ProjectProvider = ({ children }) => {
                             url: l.url,
                             createdByName: l.created_by_name,
                             createdAt: l.created_at
-                        }))
+                        })),
+                        clarityScore: s.clarity_score || 0,
+                        claritySuggestions: s.clarity_suggestions || [],
+                        aiQuiz: s.ai_quiz || null
                     })),
+                techStack: p.tech_stack || [],
                 receiverProgress: (p.receiver_section_progress || []).map(rp => ({
                     id: rp.id,
                     sectionId: rp.section_id,
                     receiverId: rp.receiver_id,
                     status: rp.status,
                     updatedAt: rp.updated_at
-                }))
+                })),
+                aiInsights: p.ai_insights || [],
+                readinessScore: p.readiness_score || 0
             }));
             setProjects(formattedProjects);
             sessionStorage.setItem("kt_projects", JSON.stringify(formattedProjects));
@@ -193,11 +204,31 @@ export const ProjectProvider = ({ children }) => {
         };
     }, [user?.id, fetchProjects]);
 
-    // Create a new project and sync to Supabase
+    // Helper to notify all Admins
+    const notifyAdmins = async (notificationData) => {
+        const { data: admins, error } = await supabase
+            .from('users')
+            .select('id')
+            .eq('role', 'Admin');
+        
+        if (error || !admins || admins.length === 0) return;
+
+        const notifications = admins.map(admin => ({
+            user_id: admin.id,
+            module: 'admin',
+            ...notificationData,
+            is_read: false,
+            created_at: new Date().toISOString()
+        }));
+
+        await supabase.from('notifications').insert(notifications);
+    };
+
+    // Create a new project and sync to Supabase (Defaults to ACTIVE mode)
     const createProject = async (projectData) => {
         const { name, description, managerId, managerName, members, sections, deadline } = projectData;
 
-        // 1. Insert Project
+        // 1. Insert Project - ALWAYS default to ACTIVE for new projects
         const { data: project, error: projectError } = await supabase
             .from("projects")
             .insert([{
@@ -208,7 +239,10 @@ export const ProjectProvider = ({ children }) => {
                 status: 'Not Started',
                 completion: 0,
                 deadline: deadline || null,
-                lifecycle_mode: projectData.lifecycleMode || (members.some(m => m.ktRole === 'Receiver') ? 'TRANSITION' : 'ACTIVE')
+                tech_stack: projectData.techStack || [],
+                lifecycle_mode: 'ACTIVE',
+                transition_type: 'INDIVIDUAL',
+                transition_count: 0
             }])
             .select()
             .single();
@@ -218,11 +252,11 @@ export const ProjectProvider = ({ children }) => {
             return null;
         }
 
-        // 2. Insert Members
+        // 2. Insert Members - Store all as 'Contributor' initially
         const membersToInsert = (members || []).map(m => ({
             project_id: project.id,
             user_id: m.userId,
-            kt_role: m.ktRole
+            kt_role: 'Contributor'
         }));
 
         if (membersToInsert.length > 0) {
@@ -246,40 +280,126 @@ export const ProjectProvider = ({ children }) => {
             if (sectionsError) console.error("Sections insert error:", sectionsError);
         }
 
-        // Re-fetch projects to update state with full project data (including joined names)
+        // Re-fetch projects to update state
         await fetchProjects();
 
-        // If there are receivers, auto-init their progress records
-        if (project && members.some(m => m.ktRole === 'Receiver')) {
-            const receivers = members.filter(m => m.ktRole === 'Receiver');
-            const { data: insertedSections } = await supabase
-                .from('project_sections')
-                .select('id')
-                .eq('project_id', project.id);
+        // 4. Notify new members (excluding the manager)
+        if (membersToInsert.length > 0) {
+            const notifications = membersToInsert
+                .filter(m => m.user_id !== managerId)
+                .map(m => ({
+                    user_id: m.user_id,
+                    module: 'manager',
+                    type: 'assignment',
+                    title: 'New Project Assignment',
+                    body: `You have been added to the project "${name}" as a Contributor.`,
+                    project_id: project.id,
+                    project_name: name,
+                    is_read: false
+                }));
 
-            if (insertedSections && insertedSections.length > 0) {
-                const progressRecords = [];
-                for (const receiver of receivers) {
-                    for (const sec of insertedSections) {
-                        progressRecords.push({
-                            project_id: project.id,
-                            section_id: sec.id,
-                            receiver_id: receiver.userId,
-                            status: 'Not Started'
-                        });
-                    }
-                }
-                if (progressRecords.length > 0) {
-                    const { error: rpError } = await supabase
-                        .from('receiver_section_progress')
-                        .upsert(progressRecords, { onConflict: 'section_id,receiver_id' });
-                    if (rpError) console.error("Error initializing receiver progress:", rpError);
-                }
-                await fetchProjects();
+            if (notifications.length > 0) {
+                await supabase.from("notifications").insert(notifications);
             }
         }
 
+        // 5. Notify all Admins about new project
+        await notifyAdmins({
+            type: 'project_created',
+            title: 'New Project Created',
+            body: `Project "${name}" has been created by ${managerName}.`,
+            project_id: project.id,
+            project_name: name
+        });
+
         return project;
+    };
+
+    // Trigger a KT Transition (ACTIVE -> TRANSITION)
+    const triggerTransition = async (projectId, transitionType, initiatorIds = [], receiverIds = [], deadline = null) => {
+        const project = projects.find(p => p.id === projectId);
+        if (!project) return false;
+
+        console.log(`[ProjectContext] Triggering ${transitionType} transition for project: ${project.name}`);
+
+        // 1. Update project mode
+        const { error: projectError } = await supabase
+            .from("projects")
+            .update({
+                lifecycle_mode: 'TRANSITION',
+                transition_type: transitionType,
+                status: 'In Progress',
+                deadline: deadline || project.deadline
+            })
+            .eq("id", projectId);
+
+        if (projectError) {
+            console.error("Error triggering transition:", projectError);
+            return false;
+        }
+
+        // 2. Assign KT Roles if applicable
+        if (initiatorIds.length > 0 && receiverIds.length > 0) {
+            // Update Initiators
+            for (const iId of initiatorIds) {
+                await supabase
+                    .from("project_members")
+                    .update({ kt_role: 'Initiator' })
+                    .eq("project_id", projectId)
+                    .eq("user_id", iId);
+            }
+
+            // Update Receivers
+            for (const rId of receiverIds) {
+                await supabase
+                    .from("project_members")
+                    .update({ kt_role: 'Receiver' })
+                    .eq("project_id", projectId)
+                    .eq("user_id", rId);
+                
+                // Initialize progress records for receiver
+                await initReceiverProgress(projectId, rId);
+            }
+
+            // Log the transition in history
+            await logTransition(
+                projectId, 
+                transitionType, 
+                transitionType === 'FULL' ? 'FULL' : 'PARTIAL', 
+                project.sections.map(s => s.id), 
+                initiatorIds[0], // Primary initiator
+                receiverIds,
+                'STARTED'
+            );
+        }
+
+        // 3. Notify Receivers
+        const otherReceivers = receiverIds.filter(rId => rId !== user.id);
+        if (otherReceivers.length > 0) {
+            const notifications = otherReceivers.map(rId => ({
+                user_id: rId,
+                module: 'icr',
+                type: 'transition',
+                title: 'Transition Phase Started',
+                body: `The project "${project.name}" has entered the transition phase. You are assigned as a Receiver.`,
+                project_id: projectId,
+                project_name: project.name,
+                is_read: false
+            }));
+            await supabase.from("notifications").insert(notifications);
+        }
+
+        // 4. Notify all Admins
+        await notifyAdmins({
+            type: 'transition_triggered',
+            title: `${transitionType} Transition Triggered`,
+            body: `A ${transitionType.toLowerCase()} transition has been started for project "${project.name}".`,
+            project_id: projectId,
+            project_name: project.name
+        });
+
+        await fetchProjects();
+        return true;
     };
 
     // Helper to calculate and sync project progress (completion & status)
@@ -369,6 +489,7 @@ export const ProjectProvider = ({ children }) => {
         if (updates.name !== undefined) dbUpdates.name = updates.name;
         if (updates.description !== undefined) dbUpdates.description = updates.description;
         if (updates.deadline !== undefined) dbUpdates.deadline = updates.deadline;
+        if (updates.techStack !== undefined) dbUpdates.tech_stack = updates.techStack;
 
         const { error } = await supabase.from("projects").update(dbUpdates).eq("id", projectId);
         if (error) {
@@ -487,7 +608,7 @@ export const ProjectProvider = ({ children }) => {
             .from("projects")
             .update({
                 lifecycle_mode: 'ACTIVE',
-                status: 'In Progress',
+                status: 'Active',
                 transition_count: (project.transitionCount || 0) + 1
             })
             .eq("id", projectId);
@@ -624,6 +745,49 @@ export const ProjectProvider = ({ children }) => {
         await fetchProjects();
     };
 
+    // Log a transition event for history tracking
+    const logTransition = async (projectId, type, scope, sections, initiatorId, receivers, status = 'STARTED') => {
+        const { error } = await supabase
+            .from("project_transitions")
+            .insert([{
+                project_id: projectId,
+                transition_type: type,
+                scope: scope,
+                selected_sections: sections,
+                initiator_id: initiatorId,
+                receiver_ids: receivers,
+                status: status,
+                started_at: new Date().toISOString(),
+                completed_at: status === 'COMPLETED' ? new Date().toISOString() : null
+            }]);
+
+        if (error) {
+            console.error("[ProjectContext] Error logging transition:", error);
+        }
+    };
+
+    // Update transition log status
+    const updateTransitionLog = async (projectId, status) => {
+        const { data, error: findError } = await supabase
+            .from("project_transitions")
+            .select("id")
+            .eq("project_id", projectId)
+            .eq("status", "STARTED")
+            .order("started_at", { ascending: false })
+            .limit(1);
+
+        if (!findError && data?.length > 0) {
+            const { error: updateError } = await supabase
+                .from("project_transitions")
+                .update({ 
+                    status: status, 
+                    completed_at: status === 'COMPLETED' ? new Date().toISOString() : null 
+                })
+                .eq("id", data[0].id);
+            if (updateError) console.error("[ProjectContext] Error updating transition log:", updateError);
+        }
+    };
+
     // Finalize transition for a SPECIFIC receiver (per-receiver graduation)
     const finalizeReceiverTransition = async (projectId, receiverId) => {
         const project = projects.find(p => p.id === projectId);
@@ -679,9 +843,110 @@ export const ProjectProvider = ({ children }) => {
             if (sectionsError) {
                 console.error("Error resetting section statuses:", sectionsError);
             }
+
+            // Update transition log
+            await updateTransitionLog(projectId, 'COMPLETED');
+        }
+
+        // 4. Notify the graduating receiver
+        await supabase.from("notifications").insert([{
+            user_id: receiverId,
+            module: 'icr',
+            type: 'graduation',
+            title: 'Transition Finalized',
+            body: `Your transition for project "${project.name}" is complete. You have graduated to a Contributor role.`,
+            project_id: projectId,
+            project_name: project.name,
+            is_read: false
+        }]);
+
+        await fetchProjects();
+    };
+
+    // Finalize transition for a MANAGER (handover ownership)
+    const finalizeManagerHandover = async (projectId, newManagerId) => {
+        const project = projects.find(p => p.id === projectId);
+        if (!project) return false;
+
+        console.log(`[ProjectContext] Finalizing manager handover for project: ${project.name}`);
+
+        const newManager = project.members.find(m => m.userId === newManagerId);
+        if (!newManager) {
+            console.error("New manager not found in project members");
+            return false;
+        }
+
+        // 1. Update project metadata and revert mode
+        const { error: projectError } = await supabase
+            .from("projects")
+            .update({
+                manager_id: newManager.userId,
+                manager_name: newManager.name,
+                lifecycle_mode: 'ACTIVE',
+                transition_type: 'INDIVIDUAL', // Reset to default
+                status: 'Active',
+                transition_count: (project.transitionCount || 0) + 1
+            })
+            .eq("id", projectId);
+
+        if (projectError) {
+            console.error("Error updating project manager:", projectError);
+            return false;
+        }
+
+        // 2. Convert ALL members to Contributor (clears Initiator/Receiver roles)
+        const { error: membersError } = await supabase
+            .from("project_members")
+            .update({ kt_role: 'Contributor' })
+            .eq("project_id", projectId);
+
+        if (membersError) {
+            console.error("Error resetting member roles:", membersError);
+        }
+
+        // 3. Reset section statuses to 'Active'
+        const { error: sectionsError } = await supabase
+            .from("project_sections")
+            .update({ status: 'Active' })
+            .eq("project_id", projectId);
+
+        if (sectionsError) {
+            console.error("Error resetting section statuses:", sectionsError);
+        }
+
+        // 4. Update transition log (if any started)
+        await updateTransitionLog(projectId, 'COMPLETED');
+
+        // 5. Notify the new Manager
+        await supabase.from("notifications").insert([{
+            user_id: newManagerId,
+            module: 'manager',
+            type: 'assignment',
+            title: 'New Manager Assignment',
+            body: `You have been assigned as the primary manager for Project "${project.name}".`,
+            project_id: projectId,
+            project_name: project.name,
+            is_read: false
+        }]);
+
+        await fetchProjects();
+        return true;
+    };
+
+    // Archive a project
+    const archiveProject = async (projectId) => {
+        const { error } = await supabase
+            .from("projects")
+            .update({ status: 'Archived' })
+            .eq("id", projectId);
+
+        if (error) {
+            console.error("[ProjectContext] Error archiving project:", error);
+            return false;
         }
 
         await fetchProjects();
+        return true;
     };
 
     // Soft delete a project
@@ -751,6 +1016,21 @@ export const ProjectProvider = ({ children }) => {
             ktRole: data.kt_role,
             functionalRole: data.users?.role || 'Member'
         };
+
+        const projectRecord = projects.find(p => p.id === projectId);
+        if (projectRecord && userId !== user.id) {
+            // Notify the new member
+            await supabase.from("notifications").insert([{
+                user_id: userId,
+                module: 'icr',
+                type: 'assignment',
+                title: 'New Project Assignment',
+                body: `You have been added to the project "${projectRecord.name}" as a ${ktRole}.`,
+                project_id: projectId,
+                project_name: projectRecord.name,
+                is_read: false
+            }]);
+        }
 
         setProjects((prev) =>
             prev.map((p) => {
@@ -1013,12 +1293,55 @@ export const ProjectProvider = ({ children }) => {
                 removeSection,
                 updateSection,
                 updateProject,
+                triggerTransition,
                 finalizeTransition,
                 finalizeReceiverTransition,
+                finalizeManagerHandover,
+                archiveProject,
                 setReverseKTMode,
                 updateReceiverProgress,
                 getReceiverCompletion,
                 initReceiverProgress,
+                updateSectionClarity: async (projectId, sectionId, clarityData) => {
+                    const { score, suggestions } = clarityData;
+                    const { error } = await supabase.from("project_sections").update({ 
+                        clarity_score: score, 
+                        clarity_suggestions: suggestions 
+                    }).eq("id", sectionId);
+                    
+                    if (!error) {
+                        setProjects(prev => prev.map(p => {
+                            if (p.id === projectId) {
+                                return {
+                                    ...p,
+                                    sections: p.sections.map(s => s.id === sectionId ? { ...s, clarityScore: score, claritySuggestions: suggestions } : s)
+                                };
+                            }
+                            return p;
+                        }));
+                    }
+                },
+                updateSectionQuiz: async (projectId, sectionId, quiz) => {
+                    const { error } = await supabase.from("project_sections").update({ ai_quiz: quiz }).eq("id", sectionId);
+                    if (!error) {
+                        setProjects(prev => prev.map(p => p.id === projectId ? {
+                            ...p,
+                            sections: p.sections.map(s => s.id === sectionId ? { ...s, aiQuiz: quiz } : s)
+                        } : p));
+                    }
+                },
+                updateProjectAIInsights: async (projectId, insights) => {
+                    const { error } = await supabase.from("projects").update({ ai_insights: insights }).eq("id", projectId);
+                    if (!error) {
+                        setProjects(prev => prev.map(p => p.id === projectId ? { ...p, aiInsights: insights } : p));
+                    }
+                },
+                updateReadinessScore: async (projectId, score) => {
+                    const { error } = await supabase.from("projects").update({ readiness_score: score }).eq("id", projectId);
+                    if (!error) {
+                        setProjects(prev => prev.map(p => p.id === projectId ? { ...p, readinessScore: score } : p));
+                    }
+                },
                 fetchProjects,
                 loading
             }}

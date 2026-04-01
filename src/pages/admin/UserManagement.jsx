@@ -382,7 +382,7 @@ export default function UserManagement({ isEmbedded = false }) {
     ];
 
     return (
-        <div className={`px-4 sm:px-8 md:px-12 py-6 max-w-7xl mx-auto space-y-6 animate-in fade-in duration-700 ${isEmbedded ? 'px-0 py-0' : ''}`}>
+        <div className={`px-4 sm:px-8 md:px-12 py-6 max-w-7xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-500 ${isEmbedded ? 'px-0 py-0' : ''}`}>
             <DeleteConfirmDialog
                 user={deleteTarget}
                 activeProjects={deleteActiveProjects}
@@ -393,7 +393,7 @@ export default function UserManagement({ isEmbedded = false }) {
 
             {!isEmbedded && (
                 <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-                    <header className="space-y-1">
+                    <header id="admin-user-mgmt-header" className="space-y-1">
                         <h1 className="text-2xl font-semibold tracking-page-title text-slate-900 dark:text-slate-100 transition-colors">User Management</h1>
                         <p className="text-muted-foreground dark:text-slate-400 text-sm font-medium leading-relaxed max-w-lg transition-colors">
                             Manage system users, assigned roles, and access controls.
@@ -411,6 +411,7 @@ export default function UserManagement({ isEmbedded = false }) {
                                 />
                             </div>
                             <Button
+                                id="admin-add-user-btn"
                                 onClick={() => setIsAdding(true)}
                                 className="bg-primary hover:bg-primary/90 text-white shadow-sm rounded-lg px-5 font-medium h-10 text-sm shrink-0 flex items-center gap-2"
                             >
