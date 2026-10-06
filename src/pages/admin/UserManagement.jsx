@@ -460,7 +460,7 @@ export default function UserManagement({ isEmbedded = false }) {
                                         type="text"
                                         value={formData.username}
                                         onChange={e => setFormData({ ...formData, username: e.target.value })}
-                                        placeholder="e.g. user@ideassion.com"
+                                        placeholder="e.g. user@domain.com"
                                         className="h-10 rounded-lg border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 dark:text-slate-200 focus-visible:ring-primary/20"
                                     />
                                     <p className="text-xs text-muted-foreground dark:text-slate-500 font-medium italic">Used to log in to the app.</p>

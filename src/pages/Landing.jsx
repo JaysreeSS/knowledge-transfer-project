@@ -153,7 +153,7 @@ export default function Landing() {
                                 </Label>
                                 <Input
                                     id="username"
-                                    placeholder="name@ideassion.com"
+                                    placeholder="name@domain.com"
                                     value={username}
                                     onChange={(e) => setUsername(e.target.value)}
                                     className="h-10 rounded-lg bg-white/[0.08] border-white/[0.1] text-white placeholder:text-white/30 focus:bg-white/[0.12] focus:ring-2 focus:ring-primary/30 focus:border-primary/30 transition-all font-medium text-base"
