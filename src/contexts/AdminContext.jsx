@@ -167,7 +167,6 @@ export const AdminProvider = ({ children }) => {
     };
 
     // --- Users Operations ---
-    // --- Users Operations ---
     const addUser = async (user) => {
         try {
             const { data, error } = await supabase.functions.invoke('manage-user', {
@@ -208,23 +207,97 @@ export const AdminProvider = ({ children }) => {
 
     const updateUser = async (id, updates) => {
         try {
-            const { isAdmin, ...dbUpdates } = updates;
-            // Optimistic update
+            const {
+                isAdmin,
+                password,
+                ...profileUpdates
+            } = updates;
+    
+            // Keep a copy so we can revert optimistic UI changes.
             const originalUsers = [...users];
-            setUsers(prev => prev.map(u => u.id === id ? { ...u, ...updates } : u));
-
-            const { error } = await supabase.from('users').update(dbUpdates).eq('id', id);
-
-            if (error) {
-                // Revert on error
+    
+            // Optimistic UI update
+            setUsers(prev =>
+                prev.map(user =>
+                    user.id === id
+                        ? {
+                            ...user,
+                            ...updates,
+                            isAdmin:
+                                profileUpdates.role !== undefined
+                                    ? profileUpdates.role === 'System Admin'
+                                    : user.isAdmin
+                        }
+                        : user
+                )
+            );
+    
+            const { data, error } = await supabase.functions.invoke(
+                'manage-user',
+                {
+                    body: {
+                        action: 'update',
+                        userId: id,
+    
+                        // Profile fields
+                        ...profileUpdates,
+    
+                        // Only include password if it was explicitly provided.
+                        ...(password
+                            ? { password }
+                            : {})
+                    }
+                }
+            );
+    
+            if (error || data?.error) {
+                // Revert optimistic update
                 setUsers(originalUsers);
-                console.error("Supabase Error updating user:", error);
-                return { success: false, error: error.message };
+    
+                const message =
+                    data?.error ||
+                    error?.message ||
+                    'Failed to update user.';
+    
+                console.error(
+                    'manage-user update Error:',
+                    message
+                );
+    
+                return {
+                    success: false,
+                    error: message
+                };
             }
-            return { success: true };
+    
+            if (data?.user) {
+                setUsers(prev =>
+                    prev.map(user =>
+                        user.id === id
+                            ? {
+                                ...data.user,
+                                isAdmin:
+                                    data.user.role === 'System Admin'
+                            }
+                            : user
+                    )
+                );
+            }
+    
+            return {
+                success: true
+            };
+    
         } catch (error) {
-            console.error("Error updating user:", error);
-            return { success: false, error: error.message };
+            console.error(
+                'Error updating user:',
+                error
+            );
+    
+            return {
+                success: false,
+                error: error.message
+            };
         }
     };
 

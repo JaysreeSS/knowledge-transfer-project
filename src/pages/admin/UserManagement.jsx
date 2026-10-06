@@ -274,12 +274,16 @@ export default function UserManagement({ isEmbedded = false }) {
 
         const submissionData = {
             username: formData.username,
-            password: formData.password,
             name: formData.name,
             role: finalRole,
             isAdmin: finalRole === 'System Admin' || formData.isAdmin || false
         };
-
+        
+        // Only send password when creating a new user
+        if (!editingId) {
+            submissionData.password = formData.password;
+        }
+        
         let result;
         if (editingId) {
             result = await updateUser(editingId, submissionData);
