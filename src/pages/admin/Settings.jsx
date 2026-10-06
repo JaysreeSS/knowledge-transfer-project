@@ -65,7 +65,7 @@ const AdminSettings = () => {
 
     const [systemSettings, setSystemSettings] = useState({
         portalName: localStorage.getItem('s_portal_name') || 'Knowledge Transfer',
-        orgName: localStorage.getItem('s_org_name') || 'Ideassion Technology Solutions',
+        orgName: localStorage.getItem('s_org_name') || 'Technology Solutions',
         supportEmail: localStorage.getItem('s_support_email') || ''
     });
 

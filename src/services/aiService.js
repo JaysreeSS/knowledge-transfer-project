@@ -29,7 +29,7 @@ export const AIService = {
   async generateDraft({ projectName, description, techStack, sectionTitle }) {
     if (!apiKey) return `[AI Error] Gemini API key not found. Please set VITE_GEMINI_API_KEY in your .env file.`;
     
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const model = genAI.getGenerativeModel({ model: "gemini-pro" });
     const prompt = `Write a concise markdown draft for a ${sectionTitle} section of a knowledge transfer document. Include the project name (${projectName}), a brief description, and the tech stack (${techStack.join(", ")}). Keep it professional and technical.`;
     
     const result = await model.generateContent(prompt);
@@ -42,7 +42,7 @@ export const AIService = {
   async polishContent(content) {
     if (!apiKey) return content;
     
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const model = genAI.getGenerativeModel({ model: "gemini-pro" });
     const prompt = `Polish the following documentation text, improving grammar, capitalization, and clarity. Return only the refined markdown without any conversational filler.\n\n${content}`;
     
     const result = await model.generateContent(prompt);
@@ -56,7 +56,7 @@ export const AIService = {
     if (!apiKey) return { score: 50, suggestions: ["Add API Key for analysis."] };
     
     try {
-      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+      const model = genAI.getGenerativeModel({ model: "gemini-pro" });
       const prompt = `Evaluate the clarity of the following documentation snippet. Provide a score from 0 to 100 and a short list of 2-3 improvement suggestions. Return ONLY a JSON object with keys 'score' (number) and 'suggestions' (array of strings).\n\n${content}`;
       
       const result = await model.generateContent(prompt);
@@ -74,7 +74,7 @@ export const AIService = {
     if (!apiKey) return [{ id: 1, question: "API key missing", options: ["Ok"], answer: 0 }];
     
     try {
-      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+      const model = genAI.getGenerativeModel({ model: "gemini-pro" });
       const prompt = `Create two multiple‑choice quiz questions that test understanding of the '${sectionTitle}' section described below. Return a JSON array where each element has 'id', 'question', 'options' (array of strings), and 'answer' (index of correct option).\n\n${content}`;
       
       const result = await model.generateContent(prompt);
@@ -92,7 +92,7 @@ export const AIService = {
     if (!apiKey) return { text: "Add your Gemini API key to start chatting!", suggestions: [] };
     
     try {
-      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+      const model = genAI.getGenerativeModel({ model: "gemini-pro" });
       const systemInstruction = `You are a role‑aware AI concierge for a knowledge‑transfer project. Respond concisely and suggest next steps when appropriate. Role: ${role}, Project: ${projectContext?.name}.`;
       const userPrompt = `Context: ${JSON.stringify(sectionContext)}\nMessage: ${message}`;
       
@@ -100,7 +100,11 @@ export const AIService = {
       return { text: result.response.text(), suggestions: ["Tell me more", "Next section"] };
     } catch (error) {
       console.error("[AIService] getChatResponse failed:", error);
-      return { text: "I'm having trouble connecting to my brain right now. Please check your API key.", suggestions: [] };
+      const errorMessage = error.message || "Unknown error";
+      return { 
+        text: `I'm having trouble connecting to my brain right now. Error: ${errorMessage}. Please check your API key and internet connection.`, 
+        suggestions: [] 
+      };
     }
   },
 
@@ -111,7 +115,7 @@ export const AIService = {
     if (!apiKey) return [];
     
     try {
-      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+      const model = genAI.getGenerativeModel({ model: "gemini-pro" });
       const prompt = `Identify up to eight technology names (frameworks, libraries, platforms, databases, cloud services) mentioned in the following text. For each, determine its category: 'Frontend', 'Backend', 'Database', 'Infrastructure', or 'Other'.
       
       Return ONLY a JSON array of objects where each object has 'name' (string) and 'category' (string).
@@ -209,7 +213,7 @@ export const AIService = {
     if (!apiKey) return defaultPlan;
 
     try {
-      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+      const model = genAI.getGenerativeModel({ model: "gemini-pro" });
       const prompt = `Review project '${project.name}' with readiness score ${score}% and gaps: ${JSON.stringify(gaps)}. Suggest 3 main focus areas for the handover and 2-3 specific clarifications needed from the current team. Return ONLY a JSON object with 'focusAreas' (array of strings) and 'clarificationsNeeded' (array of strings).`;
       
       const result = await model.generateContent(prompt);
